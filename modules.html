@@ -42,12 +42,7 @@
 <!-- ====== 模块1: 主控 ====== -->
 <div class="mod-card">
   <h3>主控板：MSPM0G3507 天猛星最小系统板</h3>
-  <div class="role">角色：整个系统的大脑。读传感器 → 算 PID → 控制电机，全在它上面跑。</div>
-
-  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
-  <div class="why">TI 公司推出的 ARM Cortex-M0+ 芯片，80MHz 主频，带 ADC、定时器（PWM/编码器模式）、I2C、UART 等外设。天猛星是第三方做的最小系统板，把芯片引脚全部引出，方便接线。<br><br>
-  <b>为什么选它？</b> H 题强制要求 TI MSPM0 系列。M0+ 内核够用，DriverLib 库函数写起来比手写寄存器轻松很多。<br><br>
-  <b>用它学会什么？</b> TI MCU 生态（CCS IDE + SysConfig 图形化配置 + DriverLib），以后电赛遇到 TI 芯片的题直接复用。</div>
+  <div class="role">角色：整个系统的大脑。读传感器 → 算 PID → 控制电机，全在它上面跑。<br><br>TI 的 ARM Cortex-M0+ 芯片，80MHz。天猛星是最小系统板，引脚全部引出。<b>H 题强制 MSPM0 系列。</b>M0+ 够用，DriverLib 写起来比手写寄存器轻松很多。以后电赛遇到 TI 芯片直接复用。</div>
 
   <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线（它跟谁连）</div>
   <div class="wiring">
@@ -69,12 +64,7 @@
 <!-- ====== 模块2: 灰度 ====== -->
 <div class="mod-card">
   <h3>8 路灰度传感器</h3>
-  <div class="role">角色：车的"眼睛"。唯一能看到黑线的传感器。输出 8 路模拟电压 → ADC 读取 → 算黑线偏移量。</div>
-
-  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
-  <div class="why">一排 8 个红外对管（红外发射+接收），固定在车前底部。每个对管照地面，黑线吸收红外 → 接收管电流小 → 输出电压低；白布反射红外 → 接收管电流大 → 输出电压高。<br><br>
-  <b>为什么 8 路？</b> 路数越多，黑线位置算得越准。5 路只能区分"偏左/正中/偏右"，8 路能算出精确的偏移量 (-100~+100)，巡线更平滑。<br><br>
-  <b>线宽 1.8cm → 黑线同时覆盖 2~3 个传感器</b>，通过加权平均算出黑线中心位置。</div>
+  <div class="role">角色：车的"眼睛"。一排 8 个红外对管照地面，黑线吸光→电压低，白布反光→电压高。<b>8 路比 5 路精度高</b>，能算出精确偏移量 (-100~+100)，巡线更平滑。线宽 1.8cm 同时覆盖 2~3 个传感器，加权平均算出黑线中心。</div>
 
   <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">代码怎么写</div>
   <div class="code"><span class="cm">/* mod_grayscale.c — 8 路 ADC → line_pos */</span>
@@ -116,12 +106,7 @@
 <!-- ====== 模块3: 电机驱动 ====== -->
 <div class="mod-card">
   <h3>四路编码器电机驱动模块</h3>
-  <div class="role">角色：接收 MCU 的 PWM 信号 → 驱动 520 电机转动 + 读取编码器反馈。这个模块替代了 TB6612（电机驱动）+ 独立编码器采集两部分。</div>
-
-  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
-  <div class="why">一块集成了 H 桥驱动器和编码器接口的板子。MCU 不需要分别接 TB6612 的 IN1/IN2/PWM 和编码器的 A/B 相——这个模块内部处理了。你只需要给两个 PWM 信号，它自己控制电机方向和速度，同时把编码器信号整理好回传给 MCU 的定时器。<br><br>
-  <b>四路 = 可以带 4 个电机。</b>我们只用 2 路（左轮+右轮），剩下 2 路备用。<br><br>
-  <b>为什么不用 TB6612？</b> TB6612 只管驱动，编码器还得单独接。四路一体板省了接线 + 编码器信号已经调理好了，MCU 直接读就行。</div>
+  <div class="role">角色：一体板，集成了 H 桥驱动器 + 编码器接口。你只给两个 PWM 信号，它自己控制方向和速度，同时把编码器信号回传给 MCU。<b>省了 TB6612+独立编码器采集的麻烦。</b>四路可带 4 个电机，我们只用 2 路（左右轮）。</div>
 
   <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线</div>
   <div class="wiring">
@@ -160,12 +145,7 @@
 <!-- ====== 模块4: MPU6050 ====== -->
 <div class="mod-card">
   <h3>MPU6050 六轴陀螺仪</h3>
-  <div class="role">角色：测航向角。白地直线段和对角线段没有黑线可巡，全靠它锁方向。</div>
-
-  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
-  <div class="why">I2C 接口的六轴传感器（三轴加速度+三轴陀螺仪）。我们只用 Z 轴陀螺仪——不停地积分角速度，算出车转了多少度。<br><br>
-  <b>为什么用它？</b> 直线段和对角线是纯白地，灰度读不到东西。陀螺仪是唯一能告诉车"你现在指哪个方向"的传感器。<br><br>
-  <b>局限</b>：陀螺仪有零漂（静止时也会慢慢往上加），需要开机校准 + 每次进对角线前重新锁航向。</div>
+  <div class="role">I2C 接口的六轴传感器，我们只用 Z 轴陀螺仪积分算航向角。白地直线段和对角线没有黑线，全靠它锁方向。<b>局限</b>：有零漂（静止时也会慢慢加），需开机校准 + 每次进对角线前重新锁航向。</div>
 
   <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线</div>
   <div class="wiring">

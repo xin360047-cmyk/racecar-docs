@@ -37,42 +37,35 @@
 </div></div>
 
 <!-- ====== 第 2 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-amber">2</span> 逐个模块调通：每个外设单独写、单独测</h2>
-<div class="call" style="margin-bottom:12px"><div class="cttl">这一阶段最重要，不要急着写小车代码。每个模块调通 = 每个外设你都能串口打印出正确的值。</div></div>
+<div class="step-group"><h2><span class="icon icon-green">2</span> 搭项目框架：把代码分到正确的楼层</h2>
 <div class="cards">
-  <a class="card" href="modules.html"><div class="num">Step 2.1</div><div class="title">模块百科：每个模块的代码+接线+为什么</div><div class="desc">8路灰度怎么算line_pos · 四路驱动怎么控电机 · MPU6050怎么读航向 · OLED显示什么 · 每个模块常见翻车。</div><div class="tag-row"><span class="mini-tag">接口</span><span class="mini-tag">代码</span><span class="mini-tag">故障</span></div></a>
+  <a class="card" href="arch.html"><div class="num">Step 2.1</div><div class="title">分层架构：bsp / module / algo / app / config</div><div class="desc">每层只做一件事。出bug知道翻哪层。换硬件只改bsp，换策略只改app。按从下到上的顺序写。</div><div class="tag-row"><span class="mini-tag">目录树</span><span class="mini-tag">依赖规则</span><span class="mini-tag">为什么分层</span></div></a>
+  <a class="card" href="params.html"><div class="num">Step 2.2</div><div class="title">参数集中营 config/param.h</div><div class="desc">所有可调数字在一个文件。赛场换场地改 3 个数就行。PID参数、速度、场地尺寸全在这里。</div><div class="tag-row"><span class="mini-tag">param.h</span></div></a>
 </div></div>
 
 <!-- ====== 第 3 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-green">3</span> 搭项目框架：把代码分到正确的楼层</h2>
+<div class="step-group"><h2><span class="icon icon-red">3</span> 写控制算法：车怎么知道往哪走、走多快？</h2>
 <div class="cards">
-  <a class="card" href="arch.html"><div class="num">Step 3.1</div><div class="title">分层架构：bsp / module / algo / app / config</div><div class="desc">每层只做一件事。出bug知道翻哪层。换硬件只改bsp，换策略只改app。按从下到上的顺序写。</div><div class="tag-row"><span class="mini-tag">目录树</span><span class="mini-tag">依赖规则</span><span class="mini-tag">为什么分层</span></div></a>
-  <a class="card" href="params.html"><div class="num">Step 3.2</div><div class="title">参数集中营 config/param.h</div><div class="desc">所有可调数字在一个文件。赛场换场地改 3 个数就行。PID参数、速度、场地尺寸全在这里。</div><div class="tag-row"><span class="mini-tag">param.h</span></div></a>
+  <a class="card" href="state.html"><div class="num">Step 3.1</div><div class="title">路径状态机：4个状态+切换条件</div><div class="desc">S0对角线→S1右弧→S2对角线→S3左弧→圈数+1→S0。怎么判断"到顶点"了？编码器+灰度双保险。</div><div class="tag-row"><span class="mini-tag">状态机</span><span class="mini-tag">顶点判断</span></div></a>
+  <a class="card" href="pid.html"><div class="num">Step 3.2</div><div class="title">串级 PID：外环方向+内环速度</div><div class="desc">偏右往左打，偏左往右打——就这一句话。速度环让车匀速，方向环让车巡线。增量式公式+为什么用增量式。</div><div class="tag-row"><span class="mini-tag">双环</span><span class="mini-tag">公式</span></div></a>
 </div></div>
 
 <!-- ====== 第 4 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-red">4</span> 写控制算法：车怎么知道往哪走、走多快？</h2>
+<div class="step-group"><h2><span class="icon icon-blue">4</span> 写代码：6步顺序，每一步写完都能测</h2>
 <div class="cards">
-  <a class="card" href="state.html"><div class="num">Step 4.1</div><div class="title">路径状态机：4个状态+切换条件</div><div class="desc">S0对角线→S1右弧→S2对角线→S3左弧→圈数+1→S0。怎么判断"到顶点"了？编码器+灰度双保险。</div><div class="tag-row"><span class="mini-tag">状态机</span><span class="mini-tag">顶点判断</span></div></a>
-  <a class="card" href="pid.html"><div class="num">Step 4.2</div><div class="title">串级 PID：外环方向+内环速度</div><div class="desc">偏右往左打，偏左往右打——就这一句话。速度环让车匀速，方向环让车巡线。增量式公式+为什么用增量式。</div><div class="tag-row"><span class="mini-tag">双环</span><span class="mini-tag">公式</span></div></a>
+  <a class="card" href="skeleton.html"><div class="num">Step 4.1</div><div class="title">代码骨架：bsp→module→algo→config→app→main</div><div class="desc">每一步都有：代码写什么、为什么这样写、写完怎么测。从调通一个ADC到整车跑起来。</div><div class="tag-row"><span class="mini-tag">main.c</span><span class="mini-tag">task_control</span><span class="mini-tag">可复制</span></div></a>
 </div></div>
 
 <!-- ====== 第 5 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-blue">5</span> 写代码：6步顺序，每一步写完都能测</h2>
+<div class="step-group"><h2><span class="icon icon-amber">5</span> 调参 + 联调</h2>
 <div class="cards">
-  <a class="card" href="skeleton.html"><div class="num">Step 5.1</div><div class="title">代码骨架：bsp→module→algo→config→app→main</div><div class="desc">每一步都有：代码写什么、为什么这样写、写完怎么测。从调通一个ADC到整车跑起来。</div><div class="tag-row"><span class="mini-tag">main.c</span><span class="mini-tag">task_control</span><span class="mini-tag">可复制</span></div></a>
+  <a class="card" href="tuning.html"><div class="num">Step 5.1</div><div class="title">PID 调参：一次只改一个数</div><div class="desc">7步逐级整定法。速度环Kp→Ki→方向环Kp→Kd→弧线大Kp→全路径联调→加速。车扭怎么办？冲出弧线怎么办？速查表。</div><div class="tag-row"><span class="mini-tag">7步法</span><span class="mini-tag">故障表</span></div></a>
 </div></div>
 
 <!-- ====== 第 6 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-amber">6</span> 调参 + 联调</h2>
+<div class="step-group"><h2><span class="icon icon-green">6</span> 赛场实战</h2>
 <div class="cards">
-  <a class="card" href="tuning.html"><div class="num">Step 6.1</div><div class="title">PID 调参：一次只改一个数</div><div class="desc">7步逐级整定法。速度环Kp→Ki→方向环Kp→Kd→弧线大Kp→全路径联调→加速。车扭怎么办？冲出弧线怎么办？速查表。</div><div class="tag-row"><span class="mini-tag">7步法</span><span class="mini-tag">故障表</span></div></a>
-</div></div>
-
-<!-- ====== 第 7 步 ====== -->
-<div class="step-group"><h2><span class="icon icon-green">7</span> 赛场实战</h2>
-<div class="cards">
-  <a class="card" href="checklist.html"><div class="num">Step 7.1</div><div class="title">4 天检查清单 · 一天不漏</div><div class="desc">D1装车 · D2直道通 · D3弧线攻克 · D4提速+报告。电池没电、焊接脱焊、光线干扰——6个翻车点提前防。</div><div class="tag-row"><span class="mini-tag">时间表</span><span class="mini-tag">避坑</span></div></a>
+  <a class="card" href="checklist.html"><div class="num">Step 6.1</div><div class="title">4 天检查清单 · 一天不漏</div><div class="desc">D1装车 · D2直道通 · D3弧线攻克 · D4提速+报告。电池没电、焊接脱焊、光线干扰——6个翻车点提前防。</div><div class="tag-row"><span class="mini-tag">时间表</span><span class="mini-tag">避坑</span></div></a>
 </div></div>
 
 </div></div>
