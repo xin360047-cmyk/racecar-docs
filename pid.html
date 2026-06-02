@@ -3,24 +3,32 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PID控制 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+<style>.fail-inline{background:#1a0810;border-left:3px solid #e94560;border-radius:0 8px 8px 0;padding:8px 14px;margin:8px 0;font-size:12px;color:#e94560;max-width:680px}</style>
 </head>
 <body>
 <div class="container">
 <a class="back" href="index.html">&larr; 返回首页</a>
 <div class="page-head"><h1>PID 控制：怎么让车沿着黑线走？</h1><div class="sub">两层 PID 套在一起：外层决定"往哪拐"，内层决定"跑多快"</div></div>
 
-<div class="sec-title">串级 PID 结构</div>
+<div class="sec-title">为什么需要两层 PID？</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  一层不够吗？<b>不够。</b>
+  <br><br>如果只有方向环：车知道偏右了要左转，但它不知道转多少"刚刚好"——可能转太少纠正不回来，也可能转太多又偏左了。
+  <br>如果只有速度环：车能跑稳一个速度，但它不知道黑线在哪——直直地冲出赛道。
+  <br><br><b>两层套一起：</b>方向环算出"需要转多少"，把这个值加到两轮速度差上。速度环确保"转的同时速度不掉"。两个环各管各的，互相不打架。
+</div>
 
+<div class="sec-title">串级 PID 结构</div>
 <div class="pidbox outer">
-  <div class="pn">方向环（外环 · 位置式）</div>
-  <div class="pio">输入 <span>line_pos</span>（灰度偏移，-100～+100）→ 输出 <span>turn_amount</span>（转向量）</div>
+  <div class="pn">方向环（外环 · 位置式 PID）</div>
+  <div class="pio">输入 <span>line_pos</span>（灰度偏移 -100~+100）→ 输出 <span>turn_amount</span>（转向修正量）</div>
   <div style="margin-top:4px;font-size:11px;color:#e9456099;">偏右就往左打，偏左就往右打。就这一句话</div>
 </div>
 <div class="pidarr">▼ turn_amount 叠加到两轮速度上 ▼</div>
 <div class="pidbox inner">
-  <div class="pn">速度环 ×2（内环 · 增量式）</div>
+  <div class="pn">速度环 ×2（内环 · 增量式 PID）</div>
   <div class="pio">左轮目标 = <span>base + turn</span> &nbsp;|&nbsp; 右轮目标 = <span>base &minus; turn</span></div>
-  <div style="margin-top:4px;font-size:11px;color:#16c79a99;">PID 算出实际 PWM → 四路编码器驱动 → 520 电机 → 编码器反馈 → 闭环</div>
+  <div style="margin-top:4px;font-size:11px;color:#16c79a99;">PID 算出实际 PWM → 编码器驱动 → 520 电机 → 编码器反馈 → 闭环</div>
 </div>
 
 <div class="sec-title">增量式 PID 公式</div>
@@ -29,31 +37,69 @@
   <div style="font-size:11px;color:#484f58;margin-top:6px;">u<sub>k</sub> = u<sub>k&minus;1</sub> + &Delta;u &nbsp;（当前输出 = 上次输出 + 增量）</div>
 </div>
 
+<div class="sec-title">为什么速度环用增量式而不是位置式？</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <b>位置式</b>：u = Kp×e + Ki×Σe + Kd×(e-e<sub>prev</sub>)。积分项 Σe 一直累加，如果电机堵转了（error 一直很大），积分疯狂暴涨 → 即使后来解除堵转，输出已经飞了。这是<b>积分饱和</b>。
+  <br><br><b>增量式</b>：u<sub>new</sub> = u<sub>old</sub> + Δu。每次只变一点点。堵转时 Δu 有限，输出不会飞。车从直道切弧线时速度突变，增量式自然过渡，不会"窜"一下。
+  <br><br><b>M0+ 算得过来：</b>只存最近 3 次误差，一个周期就两行乘加。
+</div>
+
 <div class="sec-title">三个参数一句话</div>
 <div class="pgrid">
   <div style="background:#0d1117;border:1.5px solid #e9456044;border-radius:10px;padding:14px;text-align:center">
-    <div style="color:#e94560;font-weight:700;font-size:16px">K<sub>p</sub></div>
-    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：车左右扭<br>小了：纠正太慢跑偏</div>
+    <div style="color:#e94560;font-weight:700;font-size:16px">K<sub>p</sub> 比例</div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px"><b>大了</b>：车左右扭(S形)<br><b>小了</b>：纠正太慢跑偏<br><b>作用</b>：误差越大，纠偏越猛</div>
   </div>
   <div style="background:#0d1117;border:1.5px solid #f0a50044;border-radius:10px;padding:14px;text-align:center">
-    <div style="color:#f0a500;font-weight:700;font-size:16px">K<sub>i</sub></div>
-    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：速度过冲<br>小了：永远差一点</div>
+    <div style="color:#f0a500;font-weight:700;font-size:16px">K<sub>i</sub> 积分</div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px"><b>大了</b>：速度过冲<br><b>小了</b>：永远差一点(静差)<br><b>作用</b>：消除稳态误差</div>
   </div>
   <div style="background:#0d1117;border:1.5px solid #16c79a44;border-radius:10px;padding:14px;text-align:center">
-    <div style="color:#16c79a;font-weight:700;font-size:16px">K<sub>d</sub></div>
-    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：电机嗡嗡抖<br>小了：急弯反应不过来</div>
+    <div style="color:#16c79a;font-weight:700;font-size:16px">K<sub>d</sub> 微分</div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px"><b>大了</b>：电机嗡嗡抖<br><b>小了</b>：急弯反应不过来<br><b>作用</b>：预判趋势，抑制震荡</div>
   </div>
 </div>
 
-<div class="sec-title">为什么用增量式而不是位置式？</div>
-<div class="call">
-  <ul>
-    <li><b>天然抗积分饱和</b>——输出每次只变一点点，不会累积到飞出去</li>
-    <li><b>直道切弧线时平滑过渡</b>——速度突变时增量式不会"窜"</li>
-    <li><b>M0+ 随便算</b>——只存最近 3 次误差，一个周期就算完</li>
-  </ul>
+<div class="sec-title">每段代码的作用解释</div>
+<div class="code" style="max-width:720px"><span class="cm">/* 方向环：输入 line_pos，输出 turn_amount */</span>
+<span class="ty">int16_t</span> <span class="fn">pid_direction</span>(<span class="ty">float</span> error, <span class="ty">float</span> kp, <span class="ty">float</span> kd) {
+    <span class="kw">static</span> <span class="ty">float</span> last = <span class="num">0</span>;
+    <span class="ty">float</span> out = kp * error + kd * (error - last);
+    last = error;
+    <span class="kw">return</span> (<span class="ty">int16_t</span>)out;
+}
+<span class="cm">/* 效果：
+ * line_pos = +30（偏右了）→ error = +30
+ *   → kp * 30 = 正数 → turn 为正 → 左轮加速右轮减速 → 车左转纠正 ✓
+ * line_pos = -20（偏左了）→ error = -20
+ *   → kp * (-20) = 负数 → turn 为负 → 左轮减速右轮加速 → 车右转纠正 ✓
+ * 为什么不用 Ki？方向环不需要消除静差——车不需要"精确停在黑线正中间"，
+ * 黑线宽度 1.8cm 有容差。Ki 反而会在弧线段造成积分饱和 */</span></div>
+
+<div class="code" style="max-width:720px"><span class="cm">/* 速度环：输入 target & actual，输出 PWM */</span>
+<span class="ty">uint16_t</span> <span class="fn">pid_speed</span>(<span class="ty">float</span> target, <span class="ty">float</span> actual, <span class="ty">uint8_t</span> side) {
+    <span class="kw">static</span> <span class="ty">float</span> e1[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>}, e2[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>}, u[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>};
+    <span class="ty">float</span> e = target - actual;
+    <span class="ty">float</span> inc = SPD_KP*(e-e1[side]) + SPD_KI*e + SPD_KD*(e-<span class="num">2</span>*e1[side]+e2[side]);
+    u[side] += inc;
+    <span class="kw">if</span> (u[side] > <span class="num">1000</span>) u[side] = <span class="num">1000</span>; <span class="kw">if</span> (u[side] &lt; <span class="num">0</span>) u[side] = <span class="num">0</span>;
+    e2[side] = e1[side]; e1[side] = e;
+    <span class="kw">return</span> (<span class="ty">uint16_t</span>)u[side];
+}
+<span class="cm">/* 效果：
+ * target = 600（目标速度），actual = 580（实测慢了一点）
+ *   → e = +20 → inc 为正 → u 增加 → PWM 加一点 → 加速到 600 ✓
+ * target = 600，actual = 630（实测快了一点）
+ *   → e = -20 → inc 为负 → u 减少 → PWM 减一点 → 减速到 600 ✓
+ * 限幅 0~1000：PWM 不会超出合法范围 */</span></div>
+
+<div class="sec-title">常见翻车</div>
+<div class="fail-inline">❌ <b>KP 太大</b> → 直道上车左右扭（S 形摆动）。不是车坏了，是纠正过度——方向环打方向太猛，每次都越过中线</div>
+<div class="fail-inline">❌ <b>KP 太小</b> → 车慢慢偏出赛道。纠正力度不够，偏了回不来</div>
+<div class="fail-inline">❌ <b> KI 过大</b> → 速度过冲：加油门冲上去、再松油回落、再冲……像坐过山车。增量式的 Ki 作用比位置式温和，但还是不能太大</div>
+<div class="fail-inline">❌ <b>static 变量忘记用 side 区分左右</b> → e1[0]和e1[1]必须是两个独立的值。如果共用 → 左轮的 PID 会影响右轮的计算 → 两边互相干扰</div>
+<div class="fail-inline">❌ <b>限幅没写</b> → PWM 可能超出 1000 或变负 → 电机不转或倒转。每次 PID 输出后必须 CLAMP(0, 1000)</div>
+<div class="fail-inline">❌ <b>忘了调弧形 KP</b> → 直线和弧线用同一个 KP → 弧线冲出去。弧线的 DIR_KP 必须是直线的 1.5~2.5 倍</div>
 </div>
 
-</div>
-</body>
-</html>
+</div></body></html>

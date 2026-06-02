@@ -9,15 +9,27 @@
 <a class="back" href="index.html">&larr; 返回首页</a>
 <div class="page-head"><h1>路径状态机：车怎么知道该往哪走？</h1><div class="sub">你的车没有眼睛——它靠状态机告诉自己"我现在在哪一段、下一段要做什么"</div></div>
 
-<div class="sec-title">要求 3 的四个状态</div>
+<div class="sec-title">为什么需要状态机？</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  车不是在"自由驾驶"——它在执行一个<b>固定的序列任务</b>。要求(3)的路径是固定的：A→C→弧线到B→D→弧线回A。
+  <br><br>如果不用状态机，你需要在代码里写一堆 <code>if (在A到C) { 这样走 } else if (在弧线上) { 那样走 }</code>——很快变成一团乱麻。
+  <br><br><b>状态机把"我在哪"和"我该怎么做"分开。</b>先判断状态（我在哪一段），再根据状态决定控制策略（怎么走）。状态切换只发生一次（到顶点时），控制循环每 10ms 跑一次。
+</div>
+
+<div class="sec-title">要求 (3) 的四个状态</div>
 <div class="sgrid">
   <div class="snode"><div class="snid">S0</div><div class="snp">A → C 对角线</div><div class="sns">IMU 航向锁定</div><div class="snd">白地无标记 · 陀螺仪+编码器</div></div>
-  <div class="snode" style="border-color:#16c79a44"><div class="snid">S1</div><div class="snp">C → B 弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
+  <div class="snode" style="border-color:#16c79a44"><div class="snid">S1</div><div class="snp">C → B 右弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
   <div class="snode"><div class="snid">S2</div><div class="snp">B → D 对角线</div><div class="sns">IMU 航向锁定</div><div class="snd">白地无标记 · 陀螺仪+编码器</div></div>
-  <div class="snode" style="border-color:#16c79a44"><div class="snid">S3</div><div class="snp">D → A 弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
+  <div class="snode" style="border-color:#16c79a44"><div class="snid">S3</div><div class="snp">D → A 左弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
 </div>
 <div style="text-align:center;margin:14px 0;font-size:15px;color:#f0a500;font-weight:700;">
   S0 → S1 → S2 → S3 → 圈数+1 → S0 ×4 → STOP
+</div>
+<div style="max-width:680px;margin:0 auto;font-size:12px;color:#7c7f85;line-height:1.6;">
+  <b>为什么 S0/S2（对角线）和 S1/S3（弧线）控制策略不同？</b><br>
+  S0/S2 在对角线上——纯白地，没有黑线。灰度传感器读到 8 路全白 → line_pos = 0 → 方向环收不到输入。所以对角线段<b>必须用陀螺仪锁定航向</b>。<br>
+  S1/S3 在弧线上——有黑线标记。灰度能读到偏移 → 方向环正常工作。所以要降速（防止甩出去）并加大 KP（防止纠正不够快）。
 </div>
 
 <div class="sec-title">最关键的问题：怎么判断"到顶点"了？</div>
@@ -26,29 +38,47 @@
   <div class="tsn">主</div>
   <div class="tsb">
     <div class="tst">编码器里程判断（所有状态通用）</div>
-    <div class="tsd">每进入新状态时清零 distance。里程到了预设值（SEG_DIAG 或 SEG_ARC）就切状态。</div>
-    <div class="tsc">if (distance >= seg_target) { state++; mod_encoder_reset(); }</div>
+    <div class="tsd">每进入新状态时<b>清零 distance</b>。里程到了预设值（SEG_DIAG 或 SEG_ARC）就切状态。<br><br>
+    <b>为什么这样设计？</b> 场地尺寸固定，编码器精度够。对角线 A→C 的距离你是用卷尺量了写进 SEG_DIAG 的，里程到了就说明到了。这是最可靠的方法，不受光线影响。</div>
+    <div class="tsc">if (distance >= seg_target) { state++; mod_encoder_reset(); mod_buzzer_beep(); }</div>
   </div>
 </div>
 <div class="tstep" style="border-left:3px solid #f0a500;">
   <div class="tsn" style="background:#f0a500;">备</div>
   <div class="tsb">
     <div class="tst">灰度丢失判断（仅弧线段 S1/S3）</div>
-    <div class="tsd">弧线顶点处黑线突然没了 → 灰度全白 10 次 → 确认到了顶点。对角线段 S0/S2 不适用（本来就全白）。</div>
+    <div class="tsd">弧线顶点处，黑线突然没了（因为顶点就是弧线的端点，到了之后是直线段或对角线，都是白地）。连续 N 次灰度全白 → 确认到了顶点。<br><br>
+    <b>为什么只用于弧线段？</b> 对角线 S0/S2 本来就全白——从出发就是全白，不能用这个判断。这个 backup 只对 S1/S3 有效。</div>
     <div class="tsc">if (lost_count > 10) { state++; lost_count = 0; }</div>
   </div>
 </div>
 
-<div class="sec-title">S0/S2（白地对角线）和 S1/S3（弧线黑线）策略完全不同</div>
 <div class="call">
-  <div class="cttl">控制策略对比</div>
+  <div class="cttl">双重判断的必要性</div>
   <ul>
-    <li><b>S0 & S2（白地）</b>：灰度读不到东西 → 方向环输入从 line_pos 切换为 (target_heading - actual_heading) → 陀螺仪全力锁定航向。这是最容易跑偏的两段</li>
-    <li><b>S1 & S3（弧线）</b>：灰度能读到黑线偏移 → 方向环正常工作，但要降速 + 弧线专用大 KP（通常直道 KP 的 2~3 倍），防止离心力甩出去</li>
-    <li><b>S0 和 S2 的航向不同</b>：进场后先原地转一圈，陀螺仪测出 A→C 和 B→D 的实际角度，写死到 HEADING_AC 和 HEADING_BD 常量</li>
+    <li><b>编码器为主</b>：可靠，不受光线影响。但跑 4 圈累积误差可能有 5~10cm</li>
+    <li><b>灰度丢失为 backup</b>：在弧线顶点（S1→S2, S3→S0）可以兜底。即使编码器累积误差导致早/晚了一点，灰度突然全白也能抓住顶点</li>
+    <li style="color:#e94560;"><b>只靠编码器：4 圈后误差累积 → 错过一个顶点 → 后面全错</b></li>
+    <li style="color:#e94560;"><b>只靠灰度：对角线段出发就是全白 → 立即误判到顶点 → 车刚出发就切状态</b></li>
   </ul>
 </div>
 
+<div class="sec-title">每段的具体策略（task_control 里怎么写）</div>
+<table class="tbl">
+<tr><th>状态</th><th>base 速度</th><th>方向输入</th><th>方向 KP</th><th>原因</th></tr>
+<tr><td>S0 (A→C)</td><td>BASE_SPEED</td><td>陀螺仪航向差</td><td>DIR_KP</td><td>白地，锁航向</td></tr>
+<tr><td>S1 (C→B 弧线)</td><td>ARC_SPEED</td><td>灰度 line_pos</td><td>DIR_KP_ARC</td><td>有黑线巡线，降速防甩+大P快纠</td></tr>
+<tr><td>S2 (B→D)</td><td>BASE_SPEED</td><td>陀螺仪航向差</td><td>DIR_KP</td><td>白地，锁航向</td></tr>
+<tr><td>S3 (D→A 弧线)</td><td>ARC_SPEED</td><td>灰度 line_pos</td><td>DIR_KP_ARC</td><td>有黑线巡线，降速+大P</td></tr>
+</table>
+
+<div class="sec-title">常见翻车</div>
+<div style="max-width:680px;">
+  <div class="fail-inline">❌ <b>状态切换了但 encoder 没清零</b> → 下一段起点不是 0，里程乱套。每个 case 里必须调 mod_encoder_reset()</div>
+  <div class="fail-inline">❌ <b>S0 和 S2 的航向角写死了</b> → 赛场场地角度跟实验室不完全一样。进场后先让车原地转一圈，陀螺仪测出 A→C 的实际角度，自动存到 HEADING_AC 变量</div>
+  <div class="fail-inline">❌ <b>S1 弧线走反了</b> → C→B 是顺时针走右弧，B→C 是逆时针。代码里 S1 的巡线方向要跟弧线的实际方向一致。测法：先在 S1 单独跑，看车是沿着黑线走还是反向走</div>
+  <div class="fail-inline">❌ <b>第四圈计数不对</b> → g_lap 初始化为 0，S3→S0 切换时 lap++。从 S0 开始，lap 到 3 完成 3 圈，切换到 S0 时 lap=4 → STOP。检查 lap >= 4 还是 > 3</div>
+  <div class="fail-inline">❌ <b>对角线走歪</b> → 陀螺仪漂移了。每进入 S0 或 S2 时，用前 100ms 锁定初始航向，之后用"当前航向 - 锁定航向"作为方向环输入</div>
 </div>
-</body>
-</html>
+
+</div></body></html>
