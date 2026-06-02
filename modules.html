@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>模块百科 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+<style>
+.mod-card{background:#0d1117;border:1px solid #1a1f2b;border-radius:12px;padding:20px 24px;margin:16px 0;max-width:720px}
+.mod-card h3{font-size:17px;color:#f0f6fc;margin-bottom:6px}
+.mod-card .role{font-size:12px;color:#e94560;margin-bottom:8px}
+.mod-card .wiring{font-size:13px;color:#16c79a;font-family:monospace;margin-bottom:8px}
+.mod-card .why{font-size:13px;color:#c9d1d9;line-height:1.7;margin-bottom:10px}
+.fail-box{background:#1a0810;border:1.5px solid #e9456044;border-radius:8px;padding:10px 14px;margin-top:8px}
+.fail-box .ft{font-size:11px;color:#e94560;font-weight:700;margin-bottom:4px}
+.fail-box .fi{font-size:12px;color:#8b949e;margin:3px 0}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="logo"><span>电赛</span> 练习题</div><div><a href="index.html">首页</a></div></div>
+<div class="container">
+
+<div class="page-head">
+  <h1>模块百科：你需要准备哪些东西</h1>
+  <div class="sub">每个模块是什么、怎么接线、代码怎么写、为什么这样写、常见故障怎么修</div>
+</div>
+
+<!-- ====== 模块总览 ====== -->
+<div class="sec-title">模块清单</div>
+<div class="call">
+  <div class="cttl">做完这个项目你会收获这些模块（以后其他电赛题也能复用）</div>
+  <ul>
+    <li><b>MSPM0G3507 天猛星</b> — ARM Cortex-M0+ 主控，学会 TI 系 MCU 开发</li>
+    <li><b>8 路灰度传感器</b> — 巡线核心，以后所有循迹类题目通吃</li>
+    <li><b>四路编码器电机驱动</b> — 一块板搞定电机驱动+编码器读取，差速转向的基础</li>
+    <li><b>L 型 520 减速电机 ×2</b> — 带霍尔编码器，扭矩足</li>
+    <li><b>MPU6050 六轴陀螺仪</b> — I2C 通信，航向角推算，姿态传感器入门</li>
+    <li><b>0.96" OLED</b> — I2C 显示，调试神器</li>
+    <li><b>蜂鸣器 + LED</b> — GPIO 开关量控制</li>
+    <li><b>TB6612 / 四路驱动板</b> — 学会 H 桥电机驱动的 PWM 控制</li>
+  </ul>
+</div>
+
+<!-- ====== 模块1: 主控 ====== -->
+<div class="mod-card">
+  <h3>主控板：MSPM0G3507 天猛星最小系统板</h3>
+  <div class="role">角色：整个系统的大脑。读传感器 → 算 PID → 控制电机，全在它上面跑。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
+  <div class="why">TI 公司推出的 ARM Cortex-M0+ 芯片，80MHz 主频，带 ADC、定时器（PWM/编码器模式）、I2C、UART 等外设。天猛星是第三方做的最小系统板，把芯片引脚全部引出，方便接线。<br><br>
+  <b>为什么选它？</b> H 题强制要求 TI MSPM0 系列。M0+ 内核够用，DriverLib 库函数写起来比手写寄存器轻松很多。<br><br>
+  <b>用它学会什么？</b> TI MCU 生态（CCS IDE + SysConfig 图形化配置 + DriverLib），以后电赛遇到 TI 芯片的题直接复用。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线（它跟谁连）</div>
+  <div class="wiring">
+    ADC (PA0~PA7) &rarr; 8 路灰度传感器<br>
+    TIMG PWM &rarr; 四路编码器电机驱动模块<br>
+    TIMG 编码器 &rarr; 四路编码器电机驱动模块（编码器反馈）<br>
+    I2C (PB2=SCL, PB3=SDA) &rarr; OLED + MPU6050（共用 I2C 总线，地址不同）<br>
+    UART &rarr; JY901（如果需要）/ 串口调试<br>
+    GPIO &rarr; 蜂鸣器 + LED + 启动按键
+  </div>
+
+  <div class="fail-box"><div class="ft">常见翻车</div>
+    <div class="fi">• <b>供电不足</b>：天猛星用 USB 供电时 5V 输出电流有限，电机启动瞬间可能拉低电压导致 MCU 复位。解决方案：电机单独用电池供电，MCU 用另一路</div>
+    <div class="fi">• <b>引脚冲突</b>：SysConfig 配引脚时注意 I2C 和 UART 不要和 ADC/PWM 冲突。先画好引脚分配表再动手</div>
+    <div class="fi">• <b>下载失败</b>：确认 CCS 里选了正确的调试器（XDS110 / DAP-Link），确认复位线接好了</div>
+  </div>
+</div>
+
+<!-- ====== 模块2: 灰度 ====== -->
+<div class="mod-card">
+  <h3>8 路灰度传感器</h3>
+  <div class="role">角色：车的"眼睛"。唯一能看到黑线的传感器。输出 8 路模拟电压 → ADC 读取 → 算黑线偏移量。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
+  <div class="why">一排 8 个红外对管（红外发射+接收），固定在车前底部。每个对管照地面，黑线吸收红外 → 接收管电流小 → 输出电压低；白布反射红外 → 接收管电流大 → 输出电压高。<br><br>
+  <b>为什么 8 路？</b> 路数越多，黑线位置算得越准。5 路只能区分"偏左/正中/偏右"，8 路能算出精确的偏移量 (-100~+100)，巡线更平滑。<br><br>
+  <b>线宽 1.8cm → 黑线同时覆盖 2~3 个传感器</b>，通过加权平均算出黑线中心位置。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">代码怎么写</div>
+  <div class="code"><span class="cm">/* mod_grayscale.c — 8 路 ADC → line_pos */</span>
+<span class="kw">#define</span> GRAY_COUNT <span class="num">8</span>
+
+<span class="ty">int16_t</span> <span class="fn">mod_grayscale_read</span>(<span class="ty">void</span>) {
+    <span class="ty">uint16_t</span> adc[GRAY_COUNT];    <span class="cm">// 存 8 路原始 ADC 值 (0~4095)</span>
+    <span class="ty">uint8_t</span>  bit[GRAY_COUNT];    <span class="cm">// 0=白地 1=黑线</span>
+    <span class="ty">int16_t</span>  sum = <span class="num">0</span>;
+    <span class="ty">int16_t</span>  cnt = <span class="num">0</span>;
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; GRAY_COUNT; i++) {
+        adc[i] = <span class="fn">bsp_adc_read_ch</span>(i);
+        <span class="cm">// 跟校准阈值比：低于阈值 → 黑线</span>
+        bit[i] = (adc[i] &lt; threshold[i]) ? <span class="num">1</span> : <span class="num">0</span>;
+    }
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="num">0</span>; i &lt; GRAY_COUNT; i++) {
+        <span class="kw">if</span> (bit[i]) {
+            <span class="cm">// 加权求和：最左权重 -7，最右权重 +7，中间权重 0</span>
+            sum += (i * <span class="num">2</span> - (GRAY_COUNT - <span class="num">1</span>)) * <span class="num">100</span> / (GRAY_COUNT - <span class="num">1</span>);
+            cnt++;
+        }
+    }
+    <span class="kw">return</span> cnt ? (sum / cnt) : <span class="num">0</span>;  <span class="cm">// 8路全白→0；左边黑→负；右边黑→正</span>
+}
+<span class="cm">/* 这段代码的效果：黑线在正中间 → line_pos ≈ 0
+ *   黑线偏右 → line_pos > 0（方向环会让车左转纠正）
+ *   黑线偏左 → line_pos &lt; 0（方向环会让车右转纠正）
+ *   白地（全白）→ line_pos = 0（不纠偏，靠陀螺仪走直线） */</span></div>
+
+  <div class="fail-box"><div class="ft">常见翻车</div>
+    <div class="fi">• <b>阈值设错了</b>：用固定数值在不同场地完全不通用。必须每场现采——车放黑线上读 8 路存 black[]，放白布上读存 white[]，阈值=(black+white)/2</div>
+    <div class="fi">• <b>传感器高度不对</b>：离地面太远 → 读数模糊（黑白差太小）。推荐 3~5mm，太近了会蹭地面</div>
+    <div class="fi">• <b>串扰</b>：相邻传感器互相照到。用遮光罩隔开每个传感器</div>
+    <div class="fi">• <b>环境光</b>：赛场上方的灯管直接照到传感器 → 读数全偏高。加遮光罩 + 动态阈值</div>
+  </div>
+</div>
+
+<!-- ====== 模块3: 电机驱动 ====== -->
+<div class="mod-card">
+  <h3>四路编码器电机驱动模块</h3>
+  <div class="role">角色：接收 MCU 的 PWM 信号 → 驱动 520 电机转动 + 读取编码器反馈。这个模块替代了 TB6612（电机驱动）+ 独立编码器采集两部分。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
+  <div class="why">一块集成了 H 桥驱动器和编码器接口的板子。MCU 不需要分别接 TB6612 的 IN1/IN2/PWM 和编码器的 A/B 相——这个模块内部处理了。你只需要给两个 PWM 信号，它自己控制电机方向和速度，同时把编码器信号整理好回传给 MCU 的定时器。<br><br>
+  <b>四路 = 可以带 4 个电机。</b>我们只用 2 路（左轮+右轮），剩下 2 路备用。<br><br>
+  <b>为什么不用 TB6612？</b> TB6612 只管驱动，编码器还得单独接。四路一体板省了接线 + 编码器信号已经调理好了，MCU 直接读就行。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线</div>
+  <div class="wiring">
+    MCU PWM1 &rarr; M1 速度控制 → 520 电机 A（左轮）<br>
+    MCU PWM2 &rarr; M2 速度控制 → 520 电机 B（右轮）<br>
+    MCU GPIO &rarr; M1/M2 方向控制（或由模块内部根据 PWM 极性自动判向）<br>
+    编码器输出 A/B 相 &rarr; MCU 定时器正交解码输入<br>
+    电池 7.4V 或 12V &rarr; 模块电源输入端<br>
+    模块 5V 输出 &rarr; MSPM0G3507 供电（如果你的板子支持 5V 输入）
+  </div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">代码怎么写</div>
+  <div class="code"><span class="cm">/* mod_motor.c — 最简单的接口 */</span>
+<span class="ty">void</span> <span class="fn">mod_motor_set</span>(<span class="ty">uint16_t</span> pwm_l, <span class="ty">uint16_t</span> pwm_r) {
+    <span class="cm">// pwm_l: 0~1000（0=停 1000=全速正转）→ 左轮
+    // pwm_r: 0~1000 → 右轮
+    // 差速转向：pwm_l > pwm_r → 右转，pwm_l &lt; pwm_r → 左转</span>
+    <span class="fn">bsp_pwm_set_l</span>(pwm_l);
+    <span class="fn">bsp_pwm_set_r</span>(pwm_r);
+}
+<span class="cm">/* 为什么接口这么简单？
+ * 四路驱动板内部处理了方向控制和编码器调理，
+ * 所以 MCU 侧只需要给两个 PWM 值。
+ * 这是"设备驱动层"的核心价值——把复杂的硬件藏起来，
+ * 上层代码只看到 pwm_l 和 pwm_r 两个数字。 */</span></div>
+
+  <div class="fail-box"><div class="ft">常见翻车</div>
+    <div class="fi">• <b>电机不动</b>：先检查电池有电没、模块电源灯亮不亮。再检查 PWM 波形（示波器或逻辑分析仪看有没有方波）</div>
+    <div class="fi">• <b>编码器读数不动</b>：手转轮子，串口打印编码器计数。不动 → 编码器 A/B 相接反了（或没接上拉到 VCC）</div>
+    <div class="fi">• <b>编码器读数跳变/负值</b>：520 电机编码器的 A/B 相顺序和定时器正交解码的预期顺序不一致 → 交换 A 和 B</div>
+    <div class="fi">• <b>电机启动瞬间 MCU 复位</b>：电机启动电流很大（堵转可达 2A+），拉低电池电压 → 如果 MCU 和电机共用一路电，加 1000&mu;F 电容在电源输入端滤波；最好电机和 MCU 分两路供电</div>
+    <div class="fi">• <b>前进方向不一致</b>：两个电机看起来都在转，但车原地转圈 → 一个电机线接反了。交换那个电机的两根电源线</div>
+  </div>
+</div>
+
+<!-- ====== 模块4: MPU6050 ====== -->
+<div class="mod-card">
+  <h3>MPU6050 六轴陀螺仪</h3>
+  <div class="role">角色：测航向角。白地直线段和对角线段没有黑线可巡，全靠它锁方向。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;margin-top:12px;">它是什么？</div>
+  <div class="why">I2C 接口的六轴传感器（三轴加速度+三轴陀螺仪）。我们只用 Z 轴陀螺仪——不停地积分角速度，算出车转了多少度。<br><br>
+  <b>为什么用它？</b> 直线段和对角线是纯白地，灰度读不到东西。陀螺仪是唯一能告诉车"你现在指哪个方向"的传感器。<br><br>
+  <b>局限</b>：陀螺仪有零漂（静止时也会慢慢往上加），需要开机校准 + 每次进对角线前重新锁航向。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">怎么接线</div>
+  <div class="wiring">
+    VCC → 3.3V &nbsp;|&nbsp; GND → GND<br>
+    SCL → PB2 (MSPM0 I2C SCL)<br>
+    SDA → PB3 (MSPM0 I2C SDA)<br>
+    <span style="color:#7c7f85;">（与 OLED 共用 I2C 总线。MPU6050 地址=0x68，OLED 地址=0x3C，不冲突）</span>
+  </div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">代码怎么写</div>
+  <div class="code"><span class="cm">/* mod_imu.c — MPU6050 → heading */</span>
+<span class="kw">static</span> <span class="ty">float</span> gyro_bias;  <span class="cm">// 零漂（开机静止时采 1000 次取平均）</span>
+<span class="kw">static</span> <span class="ty">float</span> heading;    <span class="cm">// 累计航向角</span>
+<span class="kw">static</span> <span class="ty">uint32_t</span> last_us;
+
+<span class="ty">void</span> <span class="fn">mod_imu_calibrate</span>(<span class="ty">void</span>) {
+    <span class="cm">// 车静止不动，采 1000 次 Z 轴角速度取平均 = 零漂</span>
+}
+<span class="ty">float</span> <span class="fn">mod_imu_get_heading</span>(<span class="ty">void</span>) {
+    <span class="ty">uint32_t</span> now = <span class="fn">micros</span>();
+    <span class="ty">float</span> dt = (now - last_us) / <span class="num">1000000.0f</span>;
+    <span class="ty">float</span> gz = <span class="fn">mpu_read_z</span>() - gyro_bias;  <span class="cm">// 减零漂</span>
+    heading += gz * dt;  <span class="cm">// 积分：角速度×时间 = 角度</span>
+    last_us = now;
+    <span class="kw">return</span> heading;
+}
+<span class="cm">/* 这段代码的效果：
+ * 车原地转 90° → heading 增加 ~90
+ * 车走直线 → heading 不变（用于对角线锁定方向）
+ * ⚠ 跑久了会漂移，每圈开始前重新校准 heading */</span></div>
+
+  <div class="fail-box"><div class="ft">常见翻车</div>
+    <div class="fi">• <b>零漂没校准</b>：车不动 heading 也会涨 → 要在每次发车前静止 1 秒采零漂</div>
+    <div class="fi">• <b>I2C 设备地址冲突</b>：OLED (0x3C) 和 MPU6050 (0x68) 地址不冲突，但如果地址 0x68 读不到 → 检查接线，用 I2C 扫描程序确认设备在线</div>
+    <div class="fi">• <b>累积漂移</b>：跑 4 圈下来可能漂 10°+，对角线就走歪了 → 每段对角线进入时用编码器判断方向，陀螺仪只做微调</div>
+  </div>
+</div>
+
+<!-- ====== 模块5: OLED ====== -->
+<div class="mod-card">
+  <h3>0.96 寸 OLED（I2C）</h3>
+  <div class="role">角色：调试窗口。显示当前状态、速度、里程、PID 输出。赛场必备，没有屏幕出了问题都不知道为什么。</div>
+
+  <div class="why"><b>为什么要 OLED？</b> 你不能一直连着串口线跑。OLED 让你在场上直接看到：现在在第几个状态、当前速度多少、编码器里程多少。出问题一眼看到哪个变量不对劲。<br><br>
+  <b>I2C 地址</b>：0x3C。和 MPU6050 (0x68) 共用 I2C 总线不冲突。</div>
+
+  <div class="sec-sub" style="font-size:12px;font-weight:700;color:#f0f6fc;">代码怎么写</div>
+  <div class="code"><span class="cm">/* 赛场专用显示：循环显示关键信息 */</span>
+<span class="ty">void</span> <span class="fn">mod_oled_show_status</span>(<span class="ty">State</span> s, <span class="ty">uint8_t</span> lap,
+                           <span class="ty">float</span> dist, <span class="ty">float</span> speed, <span class="ty">int16_t</span> lpos) {
+    <span class="fn">oled_clear</span>();
+    <span class="fn">oled_print</span>(<span class="num">0</span>,<span class="num">0</span>, <span class="str">"S:%d L:%d/4"</span>, s, lap);     <span class="cm">// 状态+圈数</span>
+    <span class="fn">oled_print</span>(<span class="num">0</span>,<span class="num">2</span>, <span class="str">"D:%.0fmm"</span>, dist);           <span class="cm">// 当前段走了多远</span>
+    <span class="fn">oled_print</span>(<span class="num">0</span>,<span class="num">4</span>, <span class="str">"V:%.0f P:%d"</span>, speed, lpos);  <span class="cm">// 速度+灰度偏移</span>
+}
+<span class="cm">/* 为什么这样设计？三行显示刚好塞满 128×64 OLED：
+ * 第1行 → 知道自己在哪（状态+圈数）
+ * 第2行 → 知道走了多远（判断是否快到顶点）
+ * 第3行 → 知道PID工作状态（速度+偏移量） */</span></div>
+
+  <div class="fail-box"><div class="ft">常见翻车</div>
+    <div class="fi">• <b>不亮</b>：I2C 地址不对（0x3C 最常见，部分模块是 0x3D）。先写 I2C 扫描程序确认地址</div>
+    <div class="fi">• <b>花屏</b>：I2C 时序不对或上电没复位。初始化加 100ms 延时再发指令</div>
+  </div>
+</div>
+
+<!-- ====== 模块6: 蜂鸣器+LED ====== -->
+<div class="mod-card">
+  <h3>蜂鸣器 + LED</h3>
+  <div class="role">角色：声光提示。题目要求每经过一个顶点要"声光提示"。</div>
+  <div class="why">最简单的 GPIO 输出。有源蜂鸣器给高电平就响，LED 给高电平就亮。5 行代码搞定。<br><br>
+  <b>为什么单独做成一个模块？</b> 不是为了复杂——是为了习惯。每个外设一个文件，以后加功能（比如 LED 闪两下代表不同含义）只改这一个文件。</div>
+
+  <div class="code"><span class="cm">/* mod_buzzer.c — 声光提示 */</span>
+<span class="ty">void</span> <span class="fn">mod_buzzer_beep</span>(<span class="ty">void</span>) {
+    <span class="fn">BUZZER_ON</span>(); <span class="fn">LED_ON</span>();
+    <span class="cm">delay_ms(100);</span>
+    <span class="fn">BUZZER_OFF</span>(); <span class="fn">LED_OFF</span>();
+}
+<span class="cm">// 效果：经过顶点时响一声+闪一下，裁判知道你的车检测到了顶点</span></div>
+</div>
+
+<!-- ====== 模块间接口总结 ====== -->
+<div class="sec-title">模块间的接口总结</div>
+<div class="call">
+  <div class="cttl">一张表看懂谁和谁相连</div>
+  <ul>
+    <li><b>8 路灰度 → ADC (PA0~PA7)</b>：8 根模拟信号线。接口 = 模拟电压</li>
+    <li><b>四路编码器驱动 ← PWM (定时器)</b>：2 根 PWM 信号线。接口 = 占空比</li>
+    <li><b>四路编码器驱动 → 编码器输入 (定时器)</b>：4 根 A/B 相数字信号线。接口 = 脉冲计数</li>
+    <li><b>MPU6050 ↔ I2C (PB2=SCL PB3=SDA)</b>：2 根。接口 = I2C 寄存器读写</li>
+    <li><b>OLED ↔ I2C（同上）</b>：共用总线。接口 = I2C 寄存器读写</li>
+    <li><b>蜂鸣器/LED/按键 → GPIO</b>：3 根数字信号线。接口 = 高低电平</li>
+  </ul>
+</div>
+
+</div>
+<footer>电赛练习题 · 自动行驶小车 · MSPM0G3507 天猛星</footer>
+</body>
+</html>

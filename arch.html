@@ -3,67 +3,95 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>分层架构 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+<style>.fail-inline{background:#1a0810;border-left:3px solid #e94560;border-radius:0 8px 8px 0;padding:8px 14px;margin:8px 0;font-size:12px;color:#e94560}</style>
 </head>
 <body>
 <div class="container">
 <a class="back" href="index.html">&larr; 返回首页</a>
-<div class="page-head"><h1>分层架构：你的代码住在几楼</h1><div class="sub">这么做不是为了"规范"——是为了出 bug 的时候你能 10 秒定位到哪一层</div></div>
+<div class="page-head"><h1>分层架构：把代码分到正确的楼层</h1><div class="sub">这么做不是为了让代码"好看"——是为了出bug时10秒定位到哪一层，换硬件只改一层</div></div>
 
-<div class="sec-title">五层单向依赖</div>
-<div class="layers">
-  <div class="lcard l4"><div class="ltag">Layer 4</div><div class="lname">应用层 app/</div><div class="lfiles">state_machine · task_control · task_display</div></div>
-  <div class="larr">▼ 只调下面</div>
-  <div class="lcard l3"><div class="ltag">Layer 3</div><div class="lname">算法层 algo/</div><div class="lfiles">pid.c · filter.c</div></div>
-  <div class="larr">▼ 只调下面</div>
-  <div class="lcard l2"><div class="ltag">Layer 2</div><div class="lname">设备驱动层 module/</div><div class="lfiles">grayscale · encoder · motor · imu · oled · buzzer</div></div>
-  <div class="larr">▼ 只调下面</div>
-  <div class="lcard l1"><div class="ltag">Layer 1</div><div class="lname">板级抽象层 bsp/</div><div class="lfiles">clock · tim · adc · i2c · uart · gpio</div></div>
-  <div class="larr">▼ 只调下面</div>
-  <div class="lcard l0"><div class="ltag">Layer 0</div><div class="lname">TI MSPM0 SDK + DriverLib</div><div class="lfiles">官方库，不改不动</div></div>
+<div class="sec-title">为什么必须分层？</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <p>假设你不分层，<b>main.c 一个文件写 800 行</b>。比赛第 3 天发现 OLED 不亮——你从哪开始查？</p>
+  <p style="margin-top:8px;">假设你分了层：OLED 不亮 → 直接翻到 <code>bsp_i2c.c</code>（板级初始化）+ <code>mod_oled.c</code>（设备驱动）。10 秒定位，而不是在 800 行里找。</p>
+  <p style="margin-top:8px;">到了赛场<b>换了一个场地的场地尺寸</b>：改 <code>config/param.h</code> 里 3 个数，不改任何逻辑代码。不分层的话你需要在一坨代码里找硬编码的数字。</p>
+  <p style="margin-top:8px;"><b>换了电机驱动模块</b>：只改 <code>mod_motor.c</code> 和 <code>bsp_tim.c</code>，<code>app/task_control.c</code> 一行不动。</p>
 </div>
 
-<div class="call" style="margin-top:16px">
-  <div class="cttl">铁律</div>
-  <ul>
-    <li><b>bsp/</b> 只封装外设初始化，不写业务逻辑。改了引脚只改这里</li>
-    <li><b>module/</b> 只暴露数据接口，不直接操作寄存器。改传感器只改这里</li>
-    <li><b>algo/</b> 纯数学，不 #include 任何硬件头文件。改 PID 参数只改这里</li>
-    <li><b>app/</b> 拼装以上三层，形成赛道行为。改路径逻辑只改这里</li>
-    <li style="color:#e94560;"><b>禁止跨层反向调用</b>——module 不能调 app，algo 不能调 bsp</li>
-  </ul>
+<div class="sec-title">五层结构</div>
+<div class="layers">
+  <div class="lcard l4"><div class="ltag">Layer 4</div><div class="lname">应用层 app/</div><div class="lfiles">state_machine · task_control · task_display</div></div><div class="larr">▼</div>
+  <div class="lcard l3"><div class="ltag">Layer 3</div><div class="lname">算法层 algo/</div><div class="lfiles">pid.c · filter.c</div></div><div class="larr">▼</div>
+  <div class="lcard l2"><div class="ltag">Layer 2</div><div class="lname">设备驱动层 module/</div><div class="lfiles">grayscale · encoder · motor · imu · oled · buzzer</div></div><div class="larr">▼</div>
+  <div class="lcard l1"><div class="ltag">Layer 1</div><div class="lname">板级抽象层 bsp/</div><div class="lfiles">clock · tim · adc · i2c · uart · gpio</div></div><div class="larr">▼</div>
+  <div class="lcard l0"><div class="ltag">Layer 0</div><div class="lname">TI MSPM0 SDK · DriverLib</div><div class="lfiles">SysConfig 自动生成的外设初始化代码</div></div>
+</div>
+
+<div class="sec-title">每层详解 + 为什么要这样设计 + 常见翻车</div>
+
+<!-- L1 -->
+<div class="sec-sub" style="font-size:13px;font-weight:700;color:#7c3aed;margin-top:18px;">Layer 1: bsp/ — 板级支持包</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <b>做什么：</b>把 MSPM0 的寄存器操作封装成函数。比如 <code>bsp_adc_read_ch(3)</code> 返回 ADC 通道 3 的值，调用者不用知道 ADC12 有哪些寄存器。<br>
+  <b>为什么存在：</b>如果换了一块 MCU（比如从 MSPM0G3507 换成 MSPM0L1306），只改 bsp/，上面三层完全不知道换了芯片。<br>
+  <b>怎么用 CCS SysConfig 写：</b>在 CCS 的 SysConfig 界面里把 ADC、定时器、I2C、UART 引脚配好，点 Generate，SysConfig 自动生成 <code>ti_driver_config.c</code>。你的 bsp_xxx.c 直接调 DriverLib 函数就行。<br>
+  <div class="fail-inline">❌ 常见翻车：SysConfig 配了引脚但代码里忘了调 bsp_xxx_init() → 外设不工作。每个 bsp 文件写完后立即在 main() 里 Init 并测试（串口打印一个值证明它通了）。</div>
+</div>
+
+<!-- L2 -->
+<div class="sec-sub" style="font-size:13px;font-weight:700;color:#16c79a;margin-top:18px;">Layer 2: module/ — 设备驱动层</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <b>做什么：</b>把传感器读数变成有意义的变量。灰度传感器不再是 8 个 ADC 值，而是 <code>line_pos</code> (-100~+100)。编码器不再是计数器，而是 <code>distance</code> (mm) 和 <code>speed</code> (mm/s)。<br>
+  <b>为什么存在：</b>隔离"读数"和"含义"。上层代码永远不需要知道"灰度有几个传感器"——它只知道 line_pos。换成 16 路灰度也只改这一个文件。<br>
+  <b>设计原则：</b>每个文件只暴露数据接口。比如 <code>mod_grayscale.h</code> 只暴露 <code>calibrate()</code> 和 <code>read()</code>，不暴露 ADC 通道号。<br>
+  <div class="fail-inline">❌ 常见翻车：在 module 里直接操作寄存器而不是调 bsp → 换芯片时 module 也得改。module 只能调 bsp 里暴露的函数。</div>
+</div>
+
+<!-- L3 -->
+<div class="sec-sub" style="font-size:13px;font-weight:700;color:#f0a500;margin-top:18px;">Layer 3: algo/ — 算法层</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <b>做什么：</b>纯数学运算。输入两个数字（目标值 vs 实际值），输出一个数字（PWM）。<br>
+  <b>为什么存在：</b>PID 算法不依赖任何硬件。你可以在电脑上写个 Python 版先验算参数，再复制到 MCU。不 #include 任何硬件头文件。<br>
+  <b>增量式 vs 位置式：</b>方向环用位置式（输出 = Kp×error + Kd×delta），速度环用增量式（输出 = 上次输出 + 增量）。增量式天然防积分饱和，速度突变时不会"窜"。<br>
+  <div class="fail-inline">❌ 常见翻车：static 变量忘了初始化 → 每次调用 PID 从随机数开始算。确认 e1[] e2[] u[] 三个 static 数组都初始化为 0。</div>
+</div>
+
+<!-- L4 -->
+<div class="sec-sub" style="font-size:13px;font-weight:700;color:#e94560;margin-top:18px;">Layer 4: app/ — 应用层</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  <b>做什么：</b>离硬件最远，离"车的行为"最近。state_machine 决定现在走哪段，task_control 在每段用不同策略控制车。<br>
+  <b>为什么存在：</b>想改赛道逻辑？只改 app/。想从要求(2)的路径换成要求(3)的？只改 state_machine 的状态顺序。<br>
+  <div class="fail-inline">❌ 常见翻车：状态切换条件只用一个（比如只靠编码器）→ 编码器累积误差导致错过顶点。必须双重判断：编码器为主+灰度丢失为backup。</div>
 </div>
 
 <div class="sec-title">完整文件结构</div>
 <div class="ftree">
 <div><span class="d">racecar_h/</span></div>
-<div class="i1"><span class="d">bsp/</span> <span class="c">MSPM0 外设封装</span></div>
+<div class="i1"><span class="d">bsp/</span> <span class="c">板级 · MSPM0 外设封装</span></div>
 <div class="i2"><span class="f">bsp_clock.c/.h</span> <span class="c">SYSCLK 80MHz</span></div>
-<div class="i2"><span class="f">bsp_tim.c/.h</span> <span class="c">编码器模式 + PWM</span></div>
+<div class="i2"><span class="f">bsp_tim.c/.h</span> <span class="c">PWM + 编码器模式</span></div>
 <div class="i2"><span class="f">bsp_adc.c/.h</span> <span class="c">灰度 8 路 ADC</span></div>
 <div class="i2"><span class="f">bsp_i2c.c/.h</span> <span class="c">OLED + MPU6050</span></div>
-<div class="i2"><span class="f">bsp_uart.c/.h</span> <span class="c">JY901 / printf</span></div>
+<div class="i2"><span class="f">bsp_uart.c/.h</span> <span class="c">串口调试 printf</span></div>
 <div class="i2"><span class="f">bsp_gpio.c/.h</span> <span class="c">蜂鸣器 LED 按键</span></div>
 <div class="i1"><span class="d">module/</span> <span class="c">设备驱动 · 一外设一文件</span></div>
 <div class="i2"><span class="f">mod_grayscale.c/.h</span> <span class="c">8 路 ADC → line_pos</span></div>
 <div class="i2"><span class="f">mod_encoder.c/.h</span> <span class="c">编码器 → speed, distance</span></div>
-<div class="i2"><span class="f">mod_motor.c/.h</span> <span class="c">PWM → 四路编码器电机驱动 → 520 电机</span></div>
-<div class="i2"><span class="f">mod_imu.c/.h</span> <span class="c">MPU6050/JY901 → heading</span></div>
+<div class="i2"><span class="f">mod_motor.c/.h</span> <span class="c">PWM → 驱动模块 → 520 电机</span></div>
+<div class="i2"><span class="f">mod_imu.c/.h</span> <span class="c">MPU6050 → heading</span></div>
 <div class="i2"><span class="f">mod_oled.c/.h</span> <span class="c">0.96" OLED</span></div>
 <div class="i2"><span class="f">mod_buzzer.c/.h</span> <span class="c">蜂鸣器 + LED</span></div>
 <div class="i1"><span class="d">algo/</span> <span class="c">纯数学 · 不碰硬件</span></div>
 <div class="i2"><span class="f">pid.c/.h</span> <span class="c">增量式×2 + 位置式</span></div>
 <div class="i2"><span class="f">filter.c/.h</span> <span class="c">一阶低通 / 滑动平均</span></div>
 <div class="i1"><span class="d">app/</span> <span class="c">赛道逻辑</span></div>
-<div class="i2"><span class="f">state_machine.c/.h</span> <span class="c">路径状态机</span></div>
-<div class="i2"><span class="f">task_control.c/.h</span> <span class="c">主控循环</span></div>
-<div class="i2"><span class="f">task_display.c/.h</span> <span class="c">OLED 显示</span></div>
+<div class="i2"><span class="f">state_machine.c/.h</span> <span class="c">状态定义 + 切换逻辑</span></div>
+<div class="i2"><span class="f">task_control.c/.h</span> <span class="c">主控循环（核心）</span></div>
 <div class="i1"><span class="d">config/</span> <span class="c">参数集中</span></div>
-<div class="i2"><span class="f">pin_config.h</span> <span class="c">引脚定义</span></div>
+<div class="i2"><span class="f">pin_config.h</span> <span class="c">引脚分配（SysConfig 导出）</span></div>
 <div class="i2"><span class="f">param.h</span> <span class="c">PID / 速度 / 场地</span></div>
-<div class="i2"><span class="f">car_config.h</span> <span class="c">轮距轮径编码器线数</span></div>
+<div class="i2"><span class="f">car_config.h</span> <span class="c">轮距、轮径、编码器线数</span></div>
 <div class="i1"><span class="f">main.c</span> <span class="c">入口 · 初始化 → while(1) task_control()</span></div>
-<div class="i1"><span class="f">isr.c</span> <span class="c">中断服务</span></div>
-<div class="i1"><span class="d">sdk/</span> <span class="c">TI MSPM0 SDK 不改</span></div>
 </div>
 
 </div>

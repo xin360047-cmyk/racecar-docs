@@ -1,125 +1,81 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>电赛练习题 · 自动行驶小车 · 从零到完赛</title>
-<link rel="stylesheet" href="style.css">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电赛练习题 · 自动行驶小车 · 从零到完赛</title><link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div class="topbar">
-  <div class="logo"><span>电赛</span> 练习题</div>
-  <div><a href="arch.html" style="margin-left:14px">架构</a><a href="system.html" style="margin-left:14px">框图</a><a href="track.html" style="margin-left:14px">赛道</a></div>
-</div>
-
+<div class="topbar"><div class="logo"><span>电赛</span> 练习题</div>
+<div><a href="arch.html">架构</a><a href="system.html">框图</a><a href="track.html">赛题</a><a href="modules.html">模块</a></div></div>
 <div class="container">
-
 <div class="hero">
   <h1>电赛 <span>练习题</span> 自动行驶小车</h1>
-  <div class="lead">一份给电赛小白的实战指南。拿到题目后不知道从哪下手？<br>跟着这份文档，一步一步来。</div>
+  <div class="lead">刚看完江协科技、英雄哥C++、铁头山羊HAL？<br>这是你<b>第一个真正的电赛项目</b>。跟着做，4天后车能自己在跑道形场地上跑 4 圈。</div>
   <div class="badges">
-    <span class="badge badge-red">MSPM0G3507 天猛星</span>
-    <span class="badge badge-purple">TI DriverLib</span>
-    <span class="badge badge-green">CCS Theia</span>
+    <span class="badge badge-red">MSPM0G3507</span><span class="badge badge-purple">CCS Theia</span><span class="badge badge-green">SysConfig</span>
   </div>
+</div>
+
+<div class="sec-title" style="font-size:15px;color:#7c7f85;border:none;padding:0;">
+  下面每一步都是你<b style="color:#f0f6fc;">接下去要做的事</b>，按顺序来，不要跳。
 </div>
 
 <div class="steps">
 
-<!-- ====== 第 1 步：理解题目 ====== -->
-<div class="step-group">
-  <h2><span class="icon icon-red">1</span> 理解题目 &mdash; 这一题到底要我做什么？</h2>
-  <div class="cards">
-    <a class="card" href="track.html">
-      <div class="num">Step 1.1</div>
-      <div class="title">赛题原文：任务、场地、四问要求</div>
-      <div class="desc">不用搜原题。任务描述、跑道形场地、A B C D 四个顶点、每题几分几秒、所有限制条件——全在这里。</div>
-      <div class="tag-row"><span class="mini-tag">场地示意</span><span class="mini-tag">题目原文</span><span class="mini-tag">评分表</span></div>
-    </a>
-    <a class="card" href="system.html">
-      <div class="num">Step 1.2</div>
-      <div class="title">把题目拆成技术问题</div>
-      <div class="desc">"自动行驶"到底需要什么传感器？数据怎么流？需要哪几个变量就能跑起来？</div>
-      <div class="tag-row"><span class="mini-tag">系统框图</span><span class="mini-tag">核心变量</span></div>
-    </a>
-  </div>
-</div>
+<!-- ====== 第 0 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-red">0</span> 准备工作：买东西 + 装软件</h2>
+<div class="cards">
+  <a class="card" href="modules.html"><div class="num">Step 0.1</div><div class="title">模块清单：你需要准备哪些硬件</div><div class="desc">MSPM0G3507天猛星 · 8路灰度 · 四路编码器驱动 · 520电机 · MPU6050 · OLED · 蜂鸣器LED。每样是什么、怎么接、常见故障怎么修。</div><div class="tag-row"><span class="mini-tag">必读</span><span class="mini-tag">硬件百科</span></div></a>
+  <a class="card" href="#ccs"><div class="num">Step 0.2</div><div class="title">装 CCS Theia + 导入 SDK</div><div class="desc">TI 官方 IDE。用 SysConfig 图形化配引脚/时钟/外设，不用手写初始化代码。MSPM0 SDK ≥ 1.20。</div><div class="tag-row"><span class="mini-tag">IDE</span><span class="mini-tag">SysConfig</span></div></a>
+</div></div>
 
-<!-- ====== 第 2 步：搭项目框架 ====== -->
-<div class="step-group">
-  <h2><span class="icon icon-purple">2</span> 搭项目框架 &mdash; 代码写在哪、怎么写不乱？</h2>
-  <div class="cards">
-    <a class="card" href="arch.html">
-      <div class="num">Step 2.1</div>
-      <div class="title">分层架构：你的代码住在几楼</div>
-      <div class="desc">L0 官方库 → L1 板级封装 → L2 设备驱动 → L3 算法 → L4 应用。每层只做一件事，出bug知道翻哪层。</div>
-      <div class="tag-row"><span class="mini-tag">目录树</span><span class="mini-tag">依赖规则</span></div>
-    </a>
-    <a class="card" href="params.html">
-      <div class="num">Step 2.2</div>
-      <div class="title">参数集中营：赛场改这一个文件就够了</div>
-      <div class="desc">PID 参数、速度、场地尺寸全在一个头文件里。换个场地不用翻代码，改参数就行。</div>
-      <div class="tag-row"><span class="mini-tag">param.h</span><span class="mini-tag">调参指南</span></div>
-    </a>
-  </div>
-</div>
+<!-- ====== 第 1 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-purple">1</span> 读懂题目：这题到底要我做什么？</h2>
+<div class="cards">
+  <a class="card" href="track.html"><div class="num">Step 1.1</div><div class="title">赛题原文 + 场地 + 四问要求 + 评分表</div><div class="desc">不用搜原题。任务描述、跑道形场地、A B C D、每问几分几秒、所有限制条件——全在这里。读完就知道要得多少分。</div><div class="tag-row"><span class="mini-tag">题目原文</span><span class="mini-tag">场地</span><span class="mini-tag">评分</span></div></a>
+  <a class="card" href="system.html"><div class="num">Step 1.2</div><div class="title">系统框图：把题目拆成传感器→计算→输出</div><div class="desc">三秒看懂数据流。你代码里只操作 4 个变量：line_pos、distance、heading、pwm_l/r。这个图是你写代码的导航。</div><div class="tag-row"><span class="mini-tag">数据流</span><span class="mini-tag">核心变量</span></div></a>
+</div></div>
 
-<!-- ====== 第 3 步：写控制算法 ====== -->
-<div class="step-group">
-  <h2><span class="icon icon-amber">3</span> 写控制算法 &mdash; 怎么让车跑起来还不跑偏？</h2>
-  <div class="cards">
-    <a class="card" href="state.html">
-      <div class="num">Step 3.1</div>
-      <div class="title">路径状态机：车怎么知道该往哪走？</div>
-      <div class="desc">S0 对角线 → S1 右弧巡线 → S2 对角线 → S3 左弧巡线。状态怎么切？怎么判断"到顶点"了？</div>
-      <div class="tag-row"><span class="mini-tag">4 状态</span><span class="mini-tag">顶点判断</span></div>
-    </a>
-    <a class="card" href="pid.html">
-      <div class="num">Step 3.2</div>
-      <div class="title">PID 控制：怎么让车沿着黑线走？</div>
-      <div class="desc">外环（方向）+ 内环（速度）= 串级 PID。偏左就往右打，偏右就往左打，快慢随你调。</div>
-      <div class="tag-row"><span class="mini-tag">方向环</span><span class="mini-tag">速度环</span><span class="mini-tag">增量式</span></div>
-    </a>
-    <a class="card" href="tuning.html">
-      <div class="num">Step 3.3</div>
-      <div class="title">PID 调参：一次只改一个数</div>
-      <div class="desc">7 步逐级整定法：先开速度环 → 稳了开方向环 → 直线稳了攻弧线。车抖怎么办？跑偏怎么办？</div>
-      <div class="tag-row"><span class="mini-tag">7步法</span><span class="mini-tag">故障诊断</span></div>
-    </a>
-  </div>
-</div>
+<!-- ====== 第 2 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-amber">2</span> 逐个模块调通：每个外设单独写、单独测</h2>
+<div class="call" style="margin-bottom:12px"><div class="cttl">这一阶段最重要，不要急着写小车代码。每个模块调通 = 每个外设你都能串口打印出正确的值。</div></div>
+<div class="cards">
+  <a class="card" href="modules.html"><div class="num">Step 2.1</div><div class="title">模块百科：每个模块的代码+接线+为什么</div><div class="desc">8路灰度怎么算line_pos · 四路驱动怎么控电机 · MPU6050怎么读航向 · OLED显示什么 · 每个模块常见翻车。</div><div class="tag-row"><span class="mini-tag">接口</span><span class="mini-tag">代码</span><span class="mini-tag">故障</span></div></a>
+</div></div>
 
-<!-- ====== 第 4 步：写代码 ====== -->
-<div class="step-group">
-  <h2><span class="icon icon-green">4</span> 写代码 &mdash; 对着骨架敲就行了</h2>
-  <div class="cards">
-    <a class="card" href="skeleton.html">
-      <div class="num">Step 4.1</div>
-      <div class="title">代码骨架：main.c &rarr; state_machine &rarr; task_control</div>
-      <div class="desc">完整的 main.c 模板、状态切换逻辑、主控循环、PID 调用范例。复制过去改引脚就能跑。</div>
-      <div class="tag-row"><span class="mini-tag">main.c</span><span class="mini-tag">PID 代码</span><span class="mini-tag">可复制</span></div>
-    </a>
-  </div>
-</div>
+<!-- ====== 第 3 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-green">3</span> 搭项目框架：把代码分到正确的楼层</h2>
+<div class="cards">
+  <a class="card" href="arch.html"><div class="num">Step 3.1</div><div class="title">分层架构：bsp / module / algo / app / config</div><div class="desc">每层只做一件事。出bug知道翻哪层。换硬件只改bsp，换策略只改app。按从下到上的顺序写。</div><div class="tag-row"><span class="mini-tag">目录树</span><span class="mini-tag">依赖规则</span><span class="mini-tag">为什么分层</span></div></a>
+  <a class="card" href="params.html"><div class="num">Step 3.2</div><div class="title">参数集中营 config/param.h</div><div class="desc">所有可调数字在一个文件。赛场换场地改 3 个数就行。PID参数、速度、场地尺寸全在这里。</div><div class="tag-row"><span class="mini-tag">param.h</span></div></a>
+</div></div>
 
-<!-- ====== 第 5 步：赛场实战 ====== -->
-<div class="step-group">
-  <h2><span class="icon icon-blue">5</span> 赛场实战 &mdash; 4 天 3 夜怎么安排？</h2>
-  <div class="cards">
-    <a class="card" href="checklist.html">
-      <div class="num">Step 5.1</div>
-      <div class="title">每天检查清单 + 常见翻车点</div>
-      <div class="desc">第1天装车、第2天直线跑通、第3天弧线攻克、第4天冲速度。电池没电、焊接脱焊、光线干扰——提前防。</div>
-      <div class="tag-row"><span class="mini-tag">时间安排</span><span class="mini-tag">避坑</span></div>
-    </a>
-  </div>
-</div>
+<!-- ====== 第 4 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-red">4</span> 写控制算法：车怎么知道往哪走、走多快？</h2>
+<div class="cards">
+  <a class="card" href="state.html"><div class="num">Step 4.1</div><div class="title">路径状态机：4个状态+切换条件</div><div class="desc">S0对角线→S1右弧→S2对角线→S3左弧→圈数+1→S0。怎么判断"到顶点"了？编码器+灰度双保险。</div><div class="tag-row"><span class="mini-tag">状态机</span><span class="mini-tag">顶点判断</span></div></a>
+  <a class="card" href="pid.html"><div class="num">Step 4.2</div><div class="title">串级 PID：外环方向+内环速度</div><div class="desc">偏右往左打，偏左往右打——就这一句话。速度环让车匀速，方向环让车巡线。增量式公式+为什么用增量式。</div><div class="tag-row"><span class="mini-tag">双环</span><span class="mini-tag">公式</span></div></a>
+</div></div>
 
-</div><!-- steps -->
+<!-- ====== 第 5 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-blue">5</span> 写代码：6步顺序，每一步写完都能测</h2>
+<div class="cards">
+  <a class="card" href="skeleton.html"><div class="num">Step 5.1</div><div class="title">代码骨架：bsp→module→algo→config→app→main</div><div class="desc">每一步都有：代码写什么、为什么这样写、写完怎么测。从调通一个ADC到整车跑起来。</div><div class="tag-row"><span class="mini-tag">main.c</span><span class="mini-tag">task_control</span><span class="mini-tag">可复制</span></div></a>
+</div></div>
 
-</div>
+<!-- ====== 第 6 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-amber">6</span> 调参 + 联调</h2>
+<div class="cards">
+  <a class="card" href="tuning.html"><div class="num">Step 6.1</div><div class="title">PID 调参：一次只改一个数</div><div class="desc">7步逐级整定法。速度环Kp→Ki→方向环Kp→Kd→弧线大Kp→全路径联调→加速。车扭怎么办？冲出弧线怎么办？速查表。</div><div class="tag-row"><span class="mini-tag">7步法</span><span class="mini-tag">故障表</span></div></a>
+</div></div>
 
-<footer>电赛练习题 · 自动行驶小车 · MSPM0G3507 天猛星</footer>
+<!-- ====== 第 7 步 ====== -->
+<div class="step-group"><h2><span class="icon icon-green">7</span> 赛场实战</h2>
+<div class="cards">
+  <a class="card" href="checklist.html"><div class="num">Step 7.1</div><div class="title">4 天检查清单 · 一天不漏</div><div class="desc">D1装车 · D2直道通 · D3弧线攻克 · D4提速+报告。电池没电、焊接脱焊、光线干扰——6个翻车点提前防。</div><div class="tag-row"><span class="mini-tag">时间表</span><span class="mini-tag">避坑</span></div></a>
+</div></div>
+
+</div></div>
+<footer>电赛练习题 · 自动行驶小车 · MSPM0G3507 天猛星 · CCS Theia</footer>
 </body>
 </html>
