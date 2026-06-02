@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛道场地 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>读懂赛道和四问要求</h1><div class="sub">这是你拿到题目后第一件要做的事——把题目翻译成你要解决的技术问题</div></div>
+
+<div class="sec-title">赛道长什么样？</div>
+<div style="text-align:center;margin:16px 0;">
+<svg viewBox="0 0 700 340" width="100%" style="max-width:700px;" xmlns="http://www.w3.org/2000/svg">
+  <rect width="700" height="340" fill="#fafaf7" rx="6"/>
+  <!-- 场地 -->
+  <rect x="60" y="15" width="580" height="310" fill="none" stroke="#ccc" stroke-width="1" stroke-dasharray="6,4" rx="3"/>
+
+  <!-- 上方直线 A-B 虚线 -->
+  <line x1="195" y1="85" x2="505" y2="85" stroke="#bbb" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- 右弧 B-C 黑实线 -->
+  <path d="M 505 85 A 80 80 0 0 1 505 245" fill="none" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+
+  <!-- 下方直线 C-D 虚线 -->
+  <line x1="195" y1="245" x2="505" y2="245" stroke="#bbb" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+  <!-- 左弧 A-D 黑实线 -->
+  <path d="M 195 85 A 80 80 0 0 0 195 245" fill="none" stroke="#1a1a1a" stroke-width="4.5" stroke-linecap="round"/>
+
+  <!-- 四顶点 -->
+  <circle cx="195" cy="85" r="8" fill="#e94560" stroke="#fff" stroke-width="2"/>
+  <text x="175" y="82" fill="#e94560" font-size="17" font-weight="800">A</text>
+  <circle cx="505" cy="85" r="8" fill="#58a6ff" stroke="#fff" stroke-width="2"/>
+  <text x="516" y="82" fill="#58a6ff" font-size="17" font-weight="800">B</text>
+  <circle cx="505" cy="245" r="8" fill="#f0a500" stroke="#fff" stroke-width="2"/>
+  <text x="516" y="258" fill="#f0a500" font-size="17" font-weight="800">C</text>
+  <circle cx="195" cy="245" r="8" fill="#16c79a" stroke="#fff" stroke-width="2"/>
+  <text x="175" y="258" fill="#16c79a" font-size="17" font-weight="800">D</text>
+
+  <!-- 弧标注 -->
+  <text x="70" y="165" fill="#1a1a1a" font-size="11" text-anchor="middle">R=40cm</text>
+  <text x="640" y="165" fill="#1a1a1a" font-size="11" text-anchor="middle">R=40cm</text>
+
+  <!-- 场地尺寸 -->
+  <text x="350" y="12" fill="#888" font-size="10" text-anchor="middle">&ge; 220cm</text>
+  <text x="650" y="170" fill="#888" font-size="10" text-anchor="middle" transform="rotate(90,650,170)">&ge; 120cm</text>
+</svg>
+</div>
+<div style="max-width:650px;margin:0 auto;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:11px;color:#7c7f85;">
+  <span><span style="color:#1a1a1a;font-weight:700;">黑色实线</span> = 有标记可巡线（圆弧）</span>
+  <span><span style="color:#bbb;font-weight:700;">灰色虚线</span> = 白地无标记（直线/对角线）</span>
+</div>
+
+<div class="sec-title">四问是什么？每问你要解决什么？</div>
+<table class="tbl">
+<tr><th></th><th>路径</th><th>分</th><th>限时</th><th>核心难点</th><th>你怎么做</th></tr>
+<tr>
+  <td style="color:#e94560;font-weight:700;">Q1</td>
+  <td>A→B 沿上方直线</td><td>20</td><td>15s</td><td>白地无标记，没有线可巡</td>
+  <td>陀螺仪锁定航向 + 编码器计距，到距停车。这是送分题</td>
+</tr>
+<tr>
+  <td style="color:#f0a500;font-weight:700;">Q2</td>
+  <td>A→B→右弧到C→D→左弧回A</td><td>20</td><td>30s</td><td>弧线必须压住不脱线</td>
+  <td>弧线段降速 40% + 增大方向 P（比直道大 2~3 倍）</td>
+</tr>
+<tr>
+  <td style="color:#58a6ff;font-weight:700;">Q3</td>
+  <td>A→C 斜穿→右弧到B→D 斜穿→左弧回A</td><td>30</td><td>40s</td><td>两条对角线纯白地，无标记可巡</td>
+  <td>状态机 + IMU 航向锁定走对角线 + 弧线巡黑线</td>
+</tr>
+<tr>
+  <td style="color:#16c79a;font-weight:700;">Q4</td>
+  <td>重复 Q3 路径 × 4 圈</td><td>30</td><td>&mdash;</td><td>长时间不掉线 + 速度够快</td>
+  <td>前三圈保稳，第四圈加 Base Speed 冲刺</td>
+</tr>
+</table>
+
+<div class="sec-title">违反即 0 分的硬限制</div>
+<div class="call">
+  <div class="cttl">进场前逐条检查</div>
+  <ul>
+    <li><b>MCU</b> = TI MSPM0 系列，芯片露出来让裁判看得见</li>
+    <li><b>尺寸</b> &le; 25×15×15 cm · <b>轮式</b>（禁止履带、麦克纳姆轮）· <b>只能前进不能后退</b></li>
+    <li><b>无摄像头</b>（灰度+IMU+编码器 纯传感器方案）</li>
+    <li><b>场地不额外加标记</b>，不架设外部装置，不靠环境物品导航</li>
+    <li><b>弧线行驶时车轮投影不能脱离圆弧线</b>——这是 Q2/Q3/Q4 拿分的关键限制</li>
+    <li><b>电池供电</b>，中途不能换。带至少 3 块满电电池</li>
+  </ul>
+</div>
+
+<div class="sec-title">关键认知：场上只有两条黑色弧线有标记</div>
+<div class="call" style="border-color:#16c79a44;">
+  <div class="cttl" style="color:#16c79a;">也就是说</div>
+  <ul>
+    <li>Q1（A→B 直线）&mdash; <b>没有黑线</b>，靠陀螺仪走直线。传感器在这里帮不上忙</li>
+    <li>Q2 的弧线段（B→C 和 D→A）&mdash; <b>有黑线可巡</b>，灰度传感器能用上</li>
+    <li>Q3 的对角线（A→C 和 B→D）&mdash; <b>纯白地</b>，全靠陀螺仪推，这是全题最难的两段</li>
+    <li>四个顶点 A/B/C/D <b>不是额外的标记点</b>，就是弧线的端点。到了弧线尽头 = 到了顶点</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

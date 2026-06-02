@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分层架构 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>分层架构：你的代码住在几楼</h1><div class="sub">这么做不是为了"规范"——是为了出 bug 的时候你能 10 秒定位到哪一层</div></div>
+
+<div class="sec-title">五层单向依赖</div>
+<div class="layers">
+  <div class="lcard l4"><div class="ltag">Layer 4</div><div class="lname">应用层 app/</div><div class="lfiles">state_machine · task_control · task_display</div></div>
+  <div class="larr">▼ 只调下面</div>
+  <div class="lcard l3"><div class="ltag">Layer 3</div><div class="lname">算法层 algo/</div><div class="lfiles">pid.c · filter.c</div></div>
+  <div class="larr">▼ 只调下面</div>
+  <div class="lcard l2"><div class="ltag">Layer 2</div><div class="lname">设备驱动层 module/</div><div class="lfiles">grayscale · encoder · motor · imu · oled · buzzer</div></div>
+  <div class="larr">▼ 只调下面</div>
+  <div class="lcard l1"><div class="ltag">Layer 1</div><div class="lname">板级抽象层 bsp/</div><div class="lfiles">clock · tim · adc · i2c · uart · gpio</div></div>
+  <div class="larr">▼ 只调下面</div>
+  <div class="lcard l0"><div class="ltag">Layer 0</div><div class="lname">TI MSPM0 SDK + DriverLib</div><div class="lfiles">官方库，不改不动</div></div>
+</div>
+
+<div class="call" style="margin-top:16px">
+  <div class="cttl">铁律</div>
+  <ul>
+    <li><b>bsp/</b> 只封装外设初始化，不写业务逻辑。改了引脚只改这里</li>
+    <li><b>module/</b> 只暴露数据接口，不直接操作寄存器。改传感器只改这里</li>
+    <li><b>algo/</b> 纯数学，不 #include 任何硬件头文件。改 PID 参数只改这里</li>
+    <li><b>app/</b> 拼装以上三层，形成赛道行为。改路径逻辑只改这里</li>
+    <li style="color:#e94560;"><b>禁止跨层反向调用</b>——module 不能调 app，algo 不能调 bsp</li>
+  </ul>
+</div>
+
+<div class="sec-title">完整文件结构</div>
+<div class="ftree">
+<div><span class="d">racecar_h/</span></div>
+<div class="i1"><span class="d">bsp/</span> <span class="c">MSPM0 外设封装</span></div>
+<div class="i2"><span class="f">bsp_clock.c/.h</span> <span class="c">SYSCLK 80MHz</span></div>
+<div class="i2"><span class="f">bsp_tim.c/.h</span> <span class="c">编码器模式 + PWM</span></div>
+<div class="i2"><span class="f">bsp_adc.c/.h</span> <span class="c">灰度 8 路 ADC</span></div>
+<div class="i2"><span class="f">bsp_i2c.c/.h</span> <span class="c">OLED + MPU6050</span></div>
+<div class="i2"><span class="f">bsp_uart.c/.h</span> <span class="c">JY901 / printf</span></div>
+<div class="i2"><span class="f">bsp_gpio.c/.h</span> <span class="c">蜂鸣器 LED 按键</span></div>
+<div class="i1"><span class="d">module/</span> <span class="c">设备驱动 · 一外设一文件</span></div>
+<div class="i2"><span class="f">mod_grayscale.c/.h</span> <span class="c">8 路 ADC → line_pos</span></div>
+<div class="i2"><span class="f">mod_encoder.c/.h</span> <span class="c">编码器 → speed, distance</span></div>
+<div class="i2"><span class="f">mod_motor.c/.h</span> <span class="c">PWM → 四路编码器电机驱动 → 520 电机</span></div>
+<div class="i2"><span class="f">mod_imu.c/.h</span> <span class="c">MPU6050/JY901 → heading</span></div>
+<div class="i2"><span class="f">mod_oled.c/.h</span> <span class="c">0.96" OLED</span></div>
+<div class="i2"><span class="f">mod_buzzer.c/.h</span> <span class="c">蜂鸣器 + LED</span></div>
+<div class="i1"><span class="d">algo/</span> <span class="c">纯数学 · 不碰硬件</span></div>
+<div class="i2"><span class="f">pid.c/.h</span> <span class="c">增量式×2 + 位置式</span></div>
+<div class="i2"><span class="f">filter.c/.h</span> <span class="c">一阶低通 / 滑动平均</span></div>
+<div class="i1"><span class="d">app/</span> <span class="c">赛道逻辑</span></div>
+<div class="i2"><span class="f">state_machine.c/.h</span> <span class="c">路径状态机</span></div>
+<div class="i2"><span class="f">task_control.c/.h</span> <span class="c">主控循环</span></div>
+<div class="i2"><span class="f">task_display.c/.h</span> <span class="c">OLED 显示</span></div>
+<div class="i1"><span class="d">config/</span> <span class="c">参数集中</span></div>
+<div class="i2"><span class="f">pin_config.h</span> <span class="c">引脚定义</span></div>
+<div class="i2"><span class="f">param.h</span> <span class="c">PID / 速度 / 场地</span></div>
+<div class="i2"><span class="f">car_config.h</span> <span class="c">轮距轮径编码器线数</span></div>
+<div class="i1"><span class="f">main.c</span> <span class="c">入口 · 初始化 → while(1) task_control()</span></div>
+<div class="i1"><span class="f">isr.c</span> <span class="c">中断服务</span></div>
+<div class="i1"><span class="d">sdk/</span> <span class="c">TI MSPM0 SDK 不改</span></div>
+</div>
+
+</div>
+</body>
+</html>

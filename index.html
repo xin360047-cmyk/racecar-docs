@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电赛练习题 · 自动行驶小车 · 从零到完赛</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo"><span>电赛</span> 练习题</div>
+  <div><a href="arch.html" style="margin-left:14px">架构</a><a href="system.html" style="margin-left:14px">框图</a><a href="track.html" style="margin-left:14px">赛道</a></div>
+</div>
+
+<div class="container">
+
+<div class="hero">
+  <h1>电赛 <span>练习题</span> 自动行驶小车</h1>
+  <div class="lead">一份给电赛小白的实战指南。拿到题目后不知道从哪下手？<br>跟着这份文档，一步一步来。</div>
+  <div class="badges">
+    <span class="badge badge-red">MSPM0G3507 天猛星</span>
+    <span class="badge badge-purple">TI DriverLib</span>
+    <span class="badge badge-green">CCS Theia</span>
+  </div>
+</div>
+
+<div class="steps">
+
+<!-- ====== 第 1 步：理解题目 ====== -->
+<div class="step-group">
+  <h2><span class="icon icon-red">1</span> 理解题目 &mdash; 这一题到底要我做什么？</h2>
+  <div class="cards">
+    <a class="card" href="track.html">
+      <div class="num">Step 1.1</div>
+      <div class="title">读懂赛道和四问要求</div>
+      <div class="desc">跑道形场地长什么样？A B C D 四个顶点在哪？每问多少分、限多少秒？哪些限制违反不得分？</div>
+      <div class="tag-row"><span class="mini-tag">场地示意</span><span class="mini-tag">得分表</span></div>
+    </a>
+    <a class="card" href="system.html">
+      <div class="num">Step 1.2</div>
+      <div class="title">把题目拆成技术问题</div>
+      <div class="desc">"自动行驶"到底需要什么传感器？数据怎么流？需要哪几个变量就能跑起来？</div>
+      <div class="tag-row"><span class="mini-tag">系统框图</span><span class="mini-tag">核心变量</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- ====== 第 2 步：搭项目框架 ====== -->
+<div class="step-group">
+  <h2><span class="icon icon-purple">2</span> 搭项目框架 &mdash; 代码写在哪、怎么写不乱？</h2>
+  <div class="cards">
+    <a class="card" href="arch.html">
+      <div class="num">Step 2.1</div>
+      <div class="title">分层架构：你的代码住在几楼</div>
+      <div class="desc">L0 官方库 → L1 板级封装 → L2 设备驱动 → L3 算法 → L4 应用。每层只做一件事，出bug知道翻哪层。</div>
+      <div class="tag-row"><span class="mini-tag">目录树</span><span class="mini-tag">依赖规则</span></div>
+    </a>
+    <a class="card" href="params.html">
+      <div class="num">Step 2.2</div>
+      <div class="title">参数集中营：赛场改这一个文件就够了</div>
+      <div class="desc">PID 参数、速度、场地尺寸全在一个头文件里。换个场地不用翻代码，改参数就行。</div>
+      <div class="tag-row"><span class="mini-tag">param.h</span><span class="mini-tag">调参指南</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- ====== 第 3 步：写控制算法 ====== -->
+<div class="step-group">
+  <h2><span class="icon icon-amber">3</span> 写控制算法 &mdash; 怎么让车跑起来还不跑偏？</h2>
+  <div class="cards">
+    <a class="card" href="state.html">
+      <div class="num">Step 3.1</div>
+      <div class="title">路径状态机：车怎么知道该往哪走？</div>
+      <div class="desc">S0 对角线 → S1 右弧巡线 → S2 对角线 → S3 左弧巡线。状态怎么切？怎么判断"到顶点"了？</div>
+      <div class="tag-row"><span class="mini-tag">4 状态</span><span class="mini-tag">顶点判断</span></div>
+    </a>
+    <a class="card" href="pid.html">
+      <div class="num">Step 3.2</div>
+      <div class="title">PID 控制：怎么让车沿着黑线走？</div>
+      <div class="desc">外环（方向）+ 内环（速度）= 串级 PID。偏左就往右打，偏右就往左打，快慢随你调。</div>
+      <div class="tag-row"><span class="mini-tag">方向环</span><span class="mini-tag">速度环</span><span class="mini-tag">增量式</span></div>
+    </a>
+    <a class="card" href="tuning.html">
+      <div class="num">Step 3.3</div>
+      <div class="title">PID 调参：一次只改一个数</div>
+      <div class="desc">7 步逐级整定法：先开速度环 → 稳了开方向环 → 直线稳了攻弧线。车抖怎么办？跑偏怎么办？</div>
+      <div class="tag-row"><span class="mini-tag">7步法</span><span class="mini-tag">故障诊断</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- ====== 第 4 步：写代码 ====== -->
+<div class="step-group">
+  <h2><span class="icon icon-green">4</span> 写代码 &mdash; 对着骨架敲就行了</h2>
+  <div class="cards">
+    <a class="card" href="skeleton.html">
+      <div class="num">Step 4.1</div>
+      <div class="title">代码骨架：main.c &rarr; state_machine &rarr; task_control</div>
+      <div class="desc">完整的 main.c 模板、状态切换逻辑、主控循环、PID 调用范例。复制过去改引脚就能跑。</div>
+      <div class="tag-row"><span class="mini-tag">main.c</span><span class="mini-tag">PID 代码</span><span class="mini-tag">可复制</span></div>
+    </a>
+  </div>
+</div>
+
+<!-- ====== 第 5 步：赛场实战 ====== -->
+<div class="step-group">
+  <h2><span class="icon icon-blue">5</span> 赛场实战 &mdash; 4 天 3 夜怎么安排？</h2>
+  <div class="cards">
+    <a class="card" href="checklist.html">
+      <div class="num">Step 5.1</div>
+      <div class="title">每天检查清单 + 常见翻车点</div>
+      <div class="desc">第1天装车、第2天直线跑通、第3天弧线攻克、第4天冲速度。电池没电、焊接脱焊、光线干扰——提前防。</div>
+      <div class="tag-row"><span class="mini-tag">时间安排</span><span class="mini-tag">避坑</span></div>
+    </a>
+  </div>
+</div>
+
+</div><!-- steps -->
+
+</div>
+
+<footer>电赛练习题 · 自动行驶小车 · MSPM0G3507 天猛星</footer>
+</body>
+</html>

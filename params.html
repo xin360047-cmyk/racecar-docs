@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>参数表 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>参数集中营 config/param.h</h1><div class="sub">赛场调参只改这一个文件。换个场地？改三个数就行。换辆车？改三个数就行。</div></div>
+
+<table class="tbl">
+<tr><th>宏名</th><th>分类</th><th>含义</th><th>初始值</th><th>怎么调</th></tr>
+
+<tr><td class="cat" colspan="5">速度</td></tr>
+<tr><td style="font-family:monospace">BASE_SPEED</td><td>速度</td><td>直道/对角线 PWM 占空比 (0~1000)</td><td>600</td><td>第一圈用 400 跑通，之后 +50 逐级加</td></tr>
+<tr><td style="font-family:monospace">ARC_SPEED</td><td>速度</td><td>弧线段 PWM 占空比</td><td>350</td><td>直道的 50%~70%。弧线冲出去就降</td></tr>
+<tr><td style="font-family:monospace">TURN_LIMIT</td><td>速度</td><td>最大转向量限幅</td><td>300</td><td>方向环输出不会超过这个值，防止一轮反转</td></tr>
+
+<tr><td class="cat" colspan="5">方向环 PID（位置式）</td></tr>
+<tr><td style="font-family:monospace">DIR_KP</td><td>方向</td><td>直道/对角线 比例系数</td><td>2.5</td><td>左右摆就减，纠正慢就加</td></tr>
+<tr><td style="font-family:monospace">DIR_KP_ARC</td><td>方向</td><td>弧线段 比例系数</td><td>5.0</td><td>直道的 1.5~2.5 倍。弧线专用大P</td></tr>
+<tr><td style="font-family:monospace">DIR_KD</td><td>方向</td><td>微分系数</td><td>0.8</td><td>抑制纠正后的多余摆动</td></tr>
+
+<tr><td class="cat" colspan="5">速度环 PID（增量式）</td></tr>
+<tr><td style="font-family:monospace">SPD_KP</td><td>速度</td><td>比例系数</td><td>3.0</td><td>速度波动大就减</td></tr>
+<tr><td style="font-family:monospace">SPD_KI</td><td>速度</td><td>积分系数</td><td>0.15</td><td>有静差（永远差一点）就加</td></tr>
+<tr><td style="font-family:monospace">SPD_KD</td><td>速度</td><td>微分系数</td><td>0.5</td><td>电机抖就减或关掉</td></tr>
+
+<tr><td class="cat" colspan="5">场地尺寸 (mm) —— 到赛场第一件事：拿卷尺量！</td></tr>
+<tr><td style="font-family:monospace">SEG_DIAG</td><td>场地</td><td>A→C / B→D 对角线长度</td><td>360</td><td>sqrt(AB² + 弧跨度²) 算出再实测验证</td></tr>
+<tr><td style="font-family:monospace">SEG_ARC</td><td>场地</td><td>弧线半周长 (π×R)</td><td>377</td><td>π×40cm ≈ 125.6cm。赛场量一下实际弧度</td></tr>
+<tr><td style="font-family:monospace">VERTEX_TOL</td><td>场地</td><td>顶点判定容差 (mm)</td><td>20</td><td>太小可能漏点，太大可能提前切状态</td></tr>
+
+<tr><td class="cat" colspan="5">小车机械参数 —— 四路编码器电机驱动模块 + 520 双驱电机</td></tr>
+<tr><td style="font-family:monospace">MOTOR_DRIVER</td><td>机械</td><td>四路编码器电机驱动模块</td><td>&mdash;</td><td>一块板搞定 PWM 驱动 + 编码器采集，不拆开</td></tr>
+<tr><td style="font-family:monospace">MOTOR_TYPE</td><td>机械</td><td>L 型 520 减速电机 ×2（双驱差速）</td><td>&mdash;</td><td>带霍尔编码器，扭矩够</td></tr>
+<tr><td style="font-family:monospace">WHEEL_DIAMETER</td><td>机械</td><td>轮径 (mm)</td><td>65</td><td>用卡尺量。差 1mm 里程就偏好几厘米</td></tr>
+<tr><td style="font-family:monospace">ENCODER_PPR</td><td>机械</td><td>编码器每圈脉冲数</td><td>330</td><td>520 电机编码器线数 × 减速比。串口打印手推验证</td></tr>
+<tr><td style="font-family:monospace">TRACK_WIDTH</td><td>机械</td><td>左右轮中心距 (mm)</td><td>130</td><td>影响差速转弯半径</td></tr>
+</table>
+
+<div class="sec-title">换个场地怎么调？</div>
+<div class="call">
+  <ul>
+    <li><b>SEG_DIAG、SEG_ARC</b>——拿卷尺量实际场地，改这两个值</li>
+    <li><b>灰度阈值</b>——现场采一次白布和黑线的 ADC 值，取中点。不要用实验室的硬阈值</li>
+    <li><b>BASE_SPEED</b>——第一圈用保守速度 (400) 跑通，之后每次 +50 加到稳不住为止</li>
+    <li><b>DIR_KP</b>——弧线段压不住先加大这个，不行再降 ARC_SPEED</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

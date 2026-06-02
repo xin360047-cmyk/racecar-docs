@@ -1,0 +1,203 @@
+/* ====== racecar-h docs — polished ====== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:#090c10;color:#c9d1d9;
+  font-family:'Inter','Segoe UI','Microsoft YaHei','PingFang SC',sans-serif;
+  line-height:1.7;-webkit-font-smoothing:antialiased;
+}
+
+/* ---- nav ---- */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(9,12,16,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid #1a1f2b;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;height:52px;
+}
+.topbar .logo{font-size:14px;font-weight:700;color:#f0f6fc;letter-spacing:-0.3px;}
+.topbar .logo span{color:#e94560;}
+.topbar a{color:#8b949e;text-decoration:none;font-size:12px;margin-left:20px;transition:color .15s}
+.topbar a:hover{color:#f0f6fc}
+
+/* ---- container ---- */
+.container{max-width:880px;margin:0 auto;padding:72px 28px 40px}
+
+/* ---- back link ---- */
+.back{display:inline-block;color:#7c7f85;text-decoration:none;font-size:13px;margin-bottom:24px;transition:color .15s}
+.back:hover{color:#e94560}
+
+/* ---- page heading ---- */
+.page-head{border-bottom:1px solid #1a1f2b;padding-bottom:18px;margin-bottom:28px}
+.page-head h1{font-size:26px;font-weight:800;color:#f0f6fc;letter-spacing:-0.4px}
+.page-head .sub{font-size:13px;color:#7c7f85;margin-top:4px}
+
+/* ---- hero (homepage) ---- */
+.hero{text-align:center;padding:40px 0 20px}
+.hero h1{font-size:38px;font-weight:800;color:#f0f6fc;letter-spacing:-0.8px}
+.hero h1 span{color:#e94560}
+.hero .lead{font-size:15px;color:#7c7f85;margin-top:8px;line-height:1.6}
+.hero .badges{margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.badge-red{background:#e9456022;color:#e94560;border:1px solid #e9456033}
+.badge-purple{background:#7c3aed22;color:#a78bfa;border:1px solid #7c3aed33}
+.badge-green{background:#16c79a22;color:#16c79a;border:1px solid #16c79a33}
+
+/* ---- step cards (homepage) ---- */
+.steps{display:flex;flex-direction:column;gap:28px;margin-top:20px}
+.step-group{}
+.step-group h2{font-size:17px;font-weight:700;color:#f0f6fc;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.step-group h2 .icon{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
+.icon-red{background:#e94560;color:#fff}
+.icon-green{background:#16c79a;color:#090c10}
+.icon-purple{background:#7c3aed;color:#fff}
+.icon-amber{background:#f0a500;color:#090c10}
+.icon-blue{background:#388bfd;color:#fff}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+
+.card{
+  display:block;text-decoration:none;
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:12px;
+  padding:20px 22px;transition:all .2s;position:relative;overflow:hidden;
+}
+.card:hover{background:#121820;border-color:#30363d;transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.card .num{font-size:10px;font-weight:700;color:#e94560;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px}
+.card .title{font-size:16px;font-weight:700;color:#f0f6fc;margin-bottom:4px}
+.card .desc{font-size:12px;color:#7c7f85;line-height:1.5}
+.card .tag-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.card .mini-tag{font-size:10px;padding:2px 8px;border-radius:10px;background:#1a1f2b;color:#8b949e;font-weight:500}
+
+/* ---- sections ---- */
+.sec-title{font-size:18px;font-weight:700;color:#f0f6fc;margin:32px 0 14px;padding-left:12px;border-left:3px solid #e94560}
+.sec-sub{font-size:13px;color:#7c7f85;margin-bottom:18px}
+
+/* ---- layers ---- */
+.layers{display:flex;flex-direction:column;gap:0;align-items:center;max-width:620px;margin:0 auto}
+.lcard{width:100%;border-radius:12px;padding:16px 24px;text-align:center}
+.lcard .ltag{font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;font-weight:700}
+.lcard .lname{font-size:17px;font-weight:700}
+.lcard .lfiles{font-size:11px;margin-top:4px}
+.l4{background:linear-gradient(135deg,#1a0810,#0d060a);border:2px solid #e9456044}
+.l4 .ltag{color:#e94560}.l4 .lname{color:#fff}.l4 .lfiles{color:#e9456099}
+.l3{background:linear-gradient(135deg,#1a1206,#0d0a04);border:2px solid #f0a50044}
+.l3 .ltag{color:#f0a500}.l3 .lname{color:#fff}.l3 .lfiles{color:#f0a50099}
+.l2{background:linear-gradient(135deg,#06140c,#040a08);border:2px solid #16c79a44}
+.l2 .ltag{color:#16c79a}.l2 .lname{color:#fff}.l2 .lfiles{color:#16c79a99}
+.l1{background:linear-gradient(135deg,#0e0a1a,#080610);border:2px solid #7c3aed44}
+.l1 .ltag{color:#7c3aed}.l1 .lname{color:#fff}.l1 .lfiles{color:#7c3aed99}
+.l0{background:#090c10;border:2px dashed #1a1f2b}
+.l0 .ltag{color:#484f58}.l0 .lname{color:#7c7f85}.l0 .lfiles{color:#484f58}
+.larr{text-align:center;color:#30363d;font-size:16px;padding:3px 0}
+
+/* ---- file tree ---- */
+.ftree{
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:12px;
+  padding:24px 28px;font-family:'Cascadia Code','Consolas',monospace;
+  font-size:13px;line-height:2.0;max-width:680px;margin:0 auto;
+}
+.ftree .d{color:#58a6ff;font-weight:600}
+.ftree .f{color:#c9d1d9}
+.ftree .c{color:#484f58;font-size:11px;margin-left:12px;font-family:'Inter','Microsoft YaHei',sans-serif}
+.ftree .i1{padding-left:20px}.ftree .i2{padding-left:40px}.ftree .i3{padding-left:60px}
+
+/* ---- system blocks ---- */
+.blk{
+  border-radius:10px;padding:14px 18px;text-align:center;min-width:130px;
+  transition:transform .15s
+}
+.blk:hover{transform:translateY(-2px)}
+.blk .lbl{font-size:10px;letter-spacing:2px;font-weight:700}
+.blk .nm{font-size:14px;font-weight:700;color:#f0f6fc;margin-top:2px}
+.blk .dt{font-size:11px;color:#7c7f85;margin-top:2px}
+.blk-s{background:#06140c;border:1.5px solid #16c79a44}.blk-s .lbl{color:#16c79a}
+.blk-m{background:#1a0810;border:1.5px solid #e9456044}.blk-m .lbl{color:#e94560}
+.blk-a{background:#1a1206;border:1.5px solid #f0a50044}.blk-a .lbl{color:#f0a500}
+.blk-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.blk-arr{text-align:center;color:#30363d;font-size:14px;padding:3px 0}
+
+/* ---- state machine ---- */
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:740px;margin:0 auto;text-align:center}
+.snode{border-radius:10px;padding:16px 10px;border:1.5px solid #1a1f2b;background:#0d1117;transition:all .15s}
+.snode:hover{border-color:#e9456044;background:#121820}
+.snode .snid{font-size:26px;font-weight:800;color:#e94560}
+.snode .snp{font-size:13px;color:#f0f6fc;margin-top:2px;font-weight:600}
+.snode .sns{font-size:11px;color:#16c79a;margin-top:4px}
+.snode .snd{font-size:10px;color:#7c7f85;margin-top:2px}
+@media(max-width:640px){.sgrid{grid-template-columns:repeat(2,1fr)}}
+
+/* ---- PID ---- */
+.pidbox{max-width:640px;margin:0 auto;border-radius:12px;padding:16px 22px;text-align:center}
+.pidbox.outer{background:linear-gradient(135deg,#1a0810,#0d060a);border:2px solid #e9456044}
+.pidbox.outer .pn{color:#e94560}
+.pidbox.inner{background:linear-gradient(135deg,#06140c,#040a08);border:2px solid #16c79a44}
+.pidbox.inner .pn{color:#16c79a}
+.pidbox .pn{font-size:15px;font-weight:700}
+.pidbox .pio{font-size:12px;color:#7c7f85;margin-top:4px}
+.pidbox .pio span{color:#16c79a;font-weight:600}
+.pidarr{text-align:center;color:#f0a50077;font-size:14px;padding:3px 0}
+
+.formbox{
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:12px;
+  padding:18px 22px;text-align:center;max-width:640px;margin:0 auto;font-family:monospace
+}
+
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:640px;margin:0 auto;text-align:center}
+@media(max-width:640px){.pgrid{grid-template-columns:1fr}}
+
+/* ---- tuning steps ---- */
+.tstep{
+  display:flex;gap:14px;align-items:flex-start;
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:10px;
+  padding:16px 18px;margin:8px 0;max-width:700px
+}
+.tstep .tsn{
+  background:#e94560;color:#fff;border-radius:50%;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;flex-shrink:0
+}
+.tstep .tsb{flex:1}
+.tstep .tst{font-weight:700;color:#f0f6fc;font-size:14px}
+.tstep .tsd{font-size:12px;color:#7c7f85;margin-top:3px;line-height:1.5}
+.tstep .tsc{font-family:monospace;font-size:11px;color:#58a6ff;margin-top:4px}
+
+/* ---- table ---- */
+.tbl{width:100%;max-width:720px;margin:0 auto;border-collapse:collapse;font-size:13px}
+.tbl th{background:#0d1117;color:#e94560;font-weight:600;padding:9px 12px;text-align:left;border-bottom:2px solid #1a1f2b}
+.tbl td{padding:8px 12px;border-bottom:1px solid #101620}
+.tbl tr:hover td{background:#0d1117}
+.tbl .cat{color:#f0a500;font-weight:600;padding-top:10px;font-size:11px;letter-spacing:.5px}
+
+/* ---- code ---- */
+.code{
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:10px;
+  padding:16px 20px;margin:10px 0;font-family:'Cascadia Code','Consolas',monospace;
+  font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre;
+  color:#c9d1d9;max-width:720px
+}
+.code .kw{color:#ff7b72}.code .ty{color:#ffa657}.code .fn{color:#d2a8ff}
+.code .cm{color:#484f58}.code .str{color:#a5d6ff}.code .num{color:#79c0ff}
+
+/* ---- callout ---- */
+.call{
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:10px;
+  padding:14px 20px;max-width:680px;margin:12px auto 0
+}
+.call .cttl{color:#e94560;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.call li{font-size:12px;color:#8b949e;margin:2px 0}
+.call li b{color:#c9d1d9}
+
+/* ---- checklist ---- */
+.chk{margin:6px 0}
+.chk .item{
+  display:flex;gap:10px;align-items:flex-start;
+  background:#0d1117;border:1px solid #1a1f2b;border-radius:8px;
+  padding:12px 16px;margin:6px 0
+}
+.chk .box{width:18px;height:18px;border:2px solid #30363d;border-radius:4px;flex-shrink:0}
+.chk .txt{font-size:13px;color:#c9d1d9;font-weight:600}
+.chk .det{font-size:11px;color:#7c7f85;margin-top:2px;line-height:1.5}
+
+/* ---- footer ---- */
+footer{text-align:center;padding:32px 20px;color:#484f58;font-size:11px;border-top:1px solid #101620;margin-top:40px}

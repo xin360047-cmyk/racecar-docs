@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>赛场实战 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>赛场实战：4 天 3 夜怎么安排？</h1><div class="sub">电赛不是比谁学得多，是比谁在 4 天里把东西做出来、做稳、做完</div></div>
+
+<div class="sec-title">第 1 天：读题 + 装车（今天必须让轮子转起来）</div>
+<div class="chk">
+  <div class="item"><div class="box"></div><div><div class="txt">读题至少 3 遍，每问限制条件逐字读</div><div class="det">尤其：MSPM0 强制、无摄像头、只能前进、弧线投影不能脱线</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">画系统框图（传感器→MCU→执行器，纸笔 5 分钟）</div><div class="det">这个图决定了你要买/焊哪些模块。不要跳过</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">所有外设模块单独测试通过</div><div class="det">ADC 读灰度串口打印 | 编码器读数串口打印 | 电机 PWM 转起来 | OLED 亮 | 蜂鸣器响</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">连夜装好车！传感器焊好固定好！</div><div class="det">第 1 天必须让车能动。车装不完第 2 天没法写代码</div></div></div>
+</div>
+
+<div class="sec-title">第 2 天：直道跑通（今天必须拿下 Q1 的 20 分）</div>
+<div class="chk">
+  <div class="item"><div class="box"></div><div><div class="txt">搭好工程文件结构（bsp/module/algo/app/config）</div><div class="det">空函数先占位，让工程编译通过。用 TI DriverLib 不手写寄存器</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">直线 A→B 跑通（白地，陀螺仪锁航向）</div><div class="det">底线。如果今天直线都没跑稳，明天会非常被动</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">编码器里程验证（串口打印 distance，手推 1m 看显示）</div><div class="det">差太多就校准 WHEEL_DIAMETER 和 ENCODER_PPR</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">速度环 PID 调好（能稳在目标速度 ±5%）</div><div class="det">今天只开速度环，方向环明天再说</div></div></div>
+</div>
+
+<div class="sec-title">第 3 天：弧线攻克 + 全路径联调</div>
+<div class="chk">
+  <div class="item"><div class="box"></div><div><div class="txt">开方向环、直线跑稳</div><div class="det">DIR_KP 从 1.0 起调。确定直线 KP 后，弧线 KP 设为它的 2 倍</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">弧线段单独调（降速 + 大 KP）</div><div class="det">写一个只跑弧线的测试状态反复调参。弧线是本赛道最易翻车的地方</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">全路径联调 Q2 + Q3</div><div class="det">4 个状态切换正确 → 圈数计数对 → OLED 实时显示状态。跑 3 圈不出错才算过</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">队友开始写设计报告</div><div class="det">写报告的另一个人负责，不要让写代码的分心</div></div></div>
+</div>
+
+<div class="sec-title">第 4 天：提速 + 报告收尾</div>
+<div class="chk">
+  <div class="item"><div class="box"></div><div><div class="txt">逐步加速：BASE_SPEED 每次 +50，加一级跑一圈</div><div class="det">稳了再加。不要一次加太多导致前功尽弃</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">最后一圈冲刺：Q3 第 4 圈最后一段直道超速</div><div class="det">反正不需要转弯了，最后一口气冲到终点</div></div></div>
+  <div class="item"><div class="box"></div><div><div class="txt">报告完成 + 格式检查 + 电路图 + 测试数据截图</div><div class="det">缺图缺数据是常见扣分项</div></div></div>
+</div>
+
+<div class="sec-title">常见翻车点（提前防）</div>
+<div class="chk">
+  <div class="item" style="border-color:#e9456044"><div class="box" style="border-color:#e94560"></div>
+    <div><div class="txt" style="color:#e94560">电池没电</div><div class="det">带 3 块以上满电电池。每跑完一次完整测试就换。电压低了 PID 参数全废</div></div></div>
+  <div class="item" style="border-color:#e9456044"><div class="box" style="border-color:#e94560"></div>
+    <div><div class="txt" style="color:#e94560">场地比预想大/小</div><div class="det">到赛场先量尺寸，改 SEG_DIAG 和 SEG_ARC。不同场地反光不同，灰度阈值现采</div></div></div>
+  <div class="item" style="border-color:#f0a50044"><div class="box" style="border-color:#f0a500"></div>
+    <div><div class="txt" style="color:#f0a500">编码器累积误差</div><div class="det">4 圈下来误差可达 5~10cm。弧线段顶点用灰度丢失兜底重置 distance</div></div></div>
+  <div class="item" style="border-color:#f0a50044"><div class="box" style="border-color:#f0a500"></div>
+    <div><div class="txt" style="color:#f0a500">焊接脱焊</div><div class="det">车震久了传感器线容易断。焊点打胶固定，带烙铁和备用杜邦线上场</div></div></div>
+  <div class="item"><div class="box"></div>
+    <div><div class="txt">光线干扰灰度</div><div class="det">赛场灯光不一样。灰度阈值用动态阈值（现场采一次黑白取中点），不写死</div></div></div>
+  <div class="item"><div class="box"></div>
+    <div><div class="txt">陀螺仪漂移</div><div class="det">对角线走歪大概率是陀螺仪零漂。每圈开始前原地 1 秒重新校准 heading</div></div></div>
+</div>
+
+</div>
+</body>
+</html>

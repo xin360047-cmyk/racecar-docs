@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>路径状态机 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>路径状态机：车怎么知道该往哪走？</h1><div class="sub">你的车没有眼睛——它靠状态机告诉自己"我现在在哪一段、下一段要做什么"</div></div>
+
+<div class="sec-title">要求 3 的四个状态</div>
+<div class="sgrid">
+  <div class="snode"><div class="snid">S0</div><div class="snp">A → C 对角线</div><div class="sns">IMU 航向锁定</div><div class="snd">白地无标记 · 陀螺仪+编码器</div></div>
+  <div class="snode" style="border-color:#16c79a44"><div class="snid">S1</div><div class="snp">C → B 弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
+  <div class="snode"><div class="snid">S2</div><div class="snp">B → D 对角线</div><div class="sns">IMU 航向锁定</div><div class="snd">白地无标记 · 陀螺仪+编码器</div></div>
+  <div class="snode" style="border-color:#16c79a44"><div class="snid">S3</div><div class="snp">D → A 弧线</div><div class="sns">巡黑线 · 降速+大P</div><div class="snd">有黑线可巡 · 灰度+陀螺仪</div></div>
+</div>
+<div style="text-align:center;margin:14px 0;font-size:15px;color:#f0a500;font-weight:700;">
+  S0 → S1 → S2 → S3 → 圈数+1 → S0 ×4 → STOP
+</div>
+
+<div class="sec-title">最关键的问题：怎么判断"到顶点"了？</div>
+
+<div class="tstep" style="border-left:3px solid #e94560;">
+  <div class="tsn">主</div>
+  <div class="tsb">
+    <div class="tst">编码器里程判断（所有状态通用）</div>
+    <div class="tsd">每进入新状态时清零 distance。里程到了预设值（SEG_DIAG 或 SEG_ARC）就切状态。</div>
+    <div class="tsc">if (distance >= seg_target) { state++; mod_encoder_reset(); }</div>
+  </div>
+</div>
+<div class="tstep" style="border-left:3px solid #f0a500;">
+  <div class="tsn" style="background:#f0a500;">备</div>
+  <div class="tsb">
+    <div class="tst">灰度丢失判断（仅弧线段 S1/S3）</div>
+    <div class="tsd">弧线顶点处黑线突然没了 → 灰度全白 10 次 → 确认到了顶点。对角线段 S0/S2 不适用（本来就全白）。</div>
+    <div class="tsc">if (lost_count > 10) { state++; lost_count = 0; }</div>
+  </div>
+</div>
+
+<div class="sec-title">S0/S2（白地对角线）和 S1/S3（弧线黑线）策略完全不同</div>
+<div class="call">
+  <div class="cttl">控制策略对比</div>
+  <ul>
+    <li><b>S0 & S2（白地）</b>：灰度读不到东西 → 方向环输入从 line_pos 切换为 (target_heading - actual_heading) → 陀螺仪全力锁定航向。这是最容易跑偏的两段</li>
+    <li><b>S1 & S3（弧线）</b>：灰度能读到黑线偏移 → 方向环正常工作，但要降速 + 弧线专用大 KP（通常直道 KP 的 2~3 倍），防止离心力甩出去</li>
+    <li><b>S0 和 S2 的航向不同</b>：进场后先原地转一圈，陀螺仪测出 A→C 和 B→D 的实际角度，写死到 HEADING_AC 和 HEADING_BD 常量</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

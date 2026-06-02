@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PID调参 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>PID 调参：一次只改一个数</h1><div class="sub">调参不是玄学。按这 7 步来，每一步只动一个参数，你知道改动起了什么作用</div></div>
+
+<div class="tstep" style="border-left:3px solid #e94560;">
+  <div class="tsn">1</div><div class="tsb">
+    <div class="tst">先调速度环 Kp（关掉方向环）</div>
+    <div class="tsd">让车直走。方向环输出恒为 0，只调 SPD_KP。给目标速度 400，看编码器反馈的实际速度能不能跟上。能稳定在目标 ±5% → Kp 够了。</div>
+    <div class="tsc">KI=0 KD=0，只动 KP。编码器打印到串口看波形</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">2</div><div class="tsb">
+    <div class="tst">速度环加 Ki（消静差）</div>
+    <div class="tsd">从 0.05 起加，每次 +0.05。看到实际速度精确跟住目标且不过冲 → 停。如果过冲（先超再回落）→ Ki 太大了。</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">3</div><div class="tsb">
+    <div class="tst">速度环加 Kd（可跳过）</div>
+    <div class="tsd">电机有嗡嗡声或速度毛刺大时才加，0.1~0.3。大多数情况下 PI 就够用了。</div>
+  </div>
+</div>
+<div class="tstep" style="border-left:3px solid #e94560;">
+  <div class="tsn">4</div><div class="tsb">
+    <div class="tst">速度环锁死，开方向环调 Kp</div>
+    <div class="tsd">车速固定 400。DIR_KP 从 1.0 起，每次 +0.5。观察车在直道上：S 形摆动 → KP 太大，退一半。纠正太慢 → KP 太小，继续加。</div>
+    <div class="tsc">这个阶段只跑直线，不要上弧线</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">5</div><div class="tsb">
+    <div class="tst">方向环加 Kd</div>
+    <div class="tsd">DIR_KP 定了后，如果车纠正时有多余摆动（越过中线弹回来），加 KD 0.3 起，每次 +0.2。</div>
+  </div>
+</div>
+<div class="tstep" style="border-left:3px solid #e94560;">
+  <div class="tsn">6</div><div class="tsb">
+    <div class="tst">弧线段单独调 KP（最关键！）</div>
+    <div class="tsd">降低速度到 ARC_SPEED（约直道的 60%），在弧线入口观察。弧线的 DIR_KP_ARC 通常需要直道 KP 的 1.5～2.5 倍。<br><br><b>翻车最多的地方：弧线入口。</b>线突然弯了，方向环反应不过来 → 建议在入口前 5cm 就切到"大KP+降速"模式。</div>
+    <div class="tsc">车滑出弧线 → KP太小或速度太快。车轮投影在弧线上抖 → KP太大</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">7</div><div class="tsb">
+    <div class="tst">全路径联调 + 逐步加速</div>
+    <div class="tsd">直道+弧线联调。确认状态切换正确、圈数计数对。BASE_SPEED 每次 +50，跑一圈确认稳了再加。最后一段直道可以超速冲刺。</div>
+  </div>
+</div>
+
+<div class="sec-title">常见问题速查</div>
+<table class="tbl">
+<tr><th>现象</th><th>原因</th><th>怎么改</th></tr>
+<tr><td>直道左右扭（S形）</td><td>方向 KP 太大</td><td>DIR_KP ×0.7</td></tr>
+<tr><td>纠正太慢，跑着跑着偏了</td><td>方向 KP 太小</td><td>DIR_KP ×1.5</td></tr>
+<tr><td>弧线口冲出去</td><td>速度太快或弧线 KP 不够</td><td>先降 ARC_SPEED，再加大 DIR_KP_ARC</td></tr>
+<tr><td>停车时过冲（超过顶点）</td><td>速度 KI 太大或减速不够早</td><td>降 SPD_KI，提前 10cm 开始减速</td></tr>
+<tr><td>电机嗡嗡叫</td><td>速度 KD 太大</td><td>SPD_KD ×0.5 或直接关掉</td></tr>
+<tr><td>对角线走歪了</td><td>陀螺仪漂移或航向角没校准</td><td>原地转一圈校准，走对角线前重新锁航向</td></tr>
+</table>
+
+</div>
+</body>
+</html>

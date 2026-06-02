@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PID控制 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head"><h1>PID 控制：怎么让车沿着黑线走？</h1><div class="sub">两层 PID 套在一起：外层决定"往哪拐"，内层决定"跑多快"</div></div>
+
+<div class="sec-title">串级 PID 结构</div>
+
+<div class="pidbox outer">
+  <div class="pn">方向环（外环 · 位置式）</div>
+  <div class="pio">输入 <span>line_pos</span>（灰度偏移，-100～+100）→ 输出 <span>turn_amount</span>（转向量）</div>
+  <div style="margin-top:4px;font-size:11px;color:#e9456099;">偏右就往左打，偏左就往右打。就这一句话</div>
+</div>
+<div class="pidarr">▼ turn_amount 叠加到两轮速度上 ▼</div>
+<div class="pidbox inner">
+  <div class="pn">速度环 ×2（内环 · 增量式）</div>
+  <div class="pio">左轮目标 = <span>base + turn</span> &nbsp;|&nbsp; 右轮目标 = <span>base &minus; turn</span></div>
+  <div style="margin-top:4px;font-size:11px;color:#16c79a99;">PID 算出实际 PWM → 四路编码器驱动 → 520 电机 → 编码器反馈 → 闭环</div>
+</div>
+
+<div class="sec-title">增量式 PID 公式</div>
+<div class="formbox" style="font-size:16px;color:#f0f6fc;">
+  &Delta;u = K<sub>p</sub>(e<sub>k</sub> &minus; e<sub>k&minus;1</sub>) + K<sub>i</sub>·e<sub>k</sub> + K<sub>d</sub>(e<sub>k</sub> &minus; 2e<sub>k&minus;1</sub> + e<sub>k&minus;2</sub>)
+  <div style="font-size:11px;color:#484f58;margin-top:6px;">u<sub>k</sub> = u<sub>k&minus;1</sub> + &Delta;u &nbsp;（当前输出 = 上次输出 + 增量）</div>
+</div>
+
+<div class="sec-title">三个参数一句话</div>
+<div class="pgrid">
+  <div style="background:#0d1117;border:1.5px solid #e9456044;border-radius:10px;padding:14px;text-align:center">
+    <div style="color:#e94560;font-weight:700;font-size:16px">K<sub>p</sub></div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：车左右扭<br>小了：纠正太慢跑偏</div>
+  </div>
+  <div style="background:#0d1117;border:1.5px solid #f0a50044;border-radius:10px;padding:14px;text-align:center">
+    <div style="color:#f0a500;font-weight:700;font-size:16px">K<sub>i</sub></div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：速度过冲<br>小了：永远差一点</div>
+  </div>
+  <div style="background:#0d1117;border:1.5px solid #16c79a44;border-radius:10px;padding:14px;text-align:center">
+    <div style="color:#16c79a;font-weight:700;font-size:16px">K<sub>d</sub></div>
+    <div style="font-size:12px;color:#8b949e;margin-top:4px;">大了：电机嗡嗡抖<br>小了：急弯反应不过来</div>
+  </div>
+</div>
+
+<div class="sec-title">为什么用增量式而不是位置式？</div>
+<div class="call">
+  <ul>
+    <li><b>天然抗积分饱和</b>——输出每次只变一点点，不会累积到飞出去</li>
+    <li><b>直道切弧线时平滑过渡</b>——速度突变时增量式不会"窜"</li>
+    <li><b>M0+ 随便算</b>——只存最近 3 次误差，一个周期就算完</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

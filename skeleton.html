@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码骨架 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+<style>
+.roadmap{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.roadmap .rm{background:#0d1117;border:1px solid #1a1f2b;border-radius:8px;padding:6px 14px;font-size:11px;color:#7c7f85;white-space:nowrap}
+.roadmap .rm.now{background:#e9456011;border-color:#e9456044;color:#e94560;font-weight:700}
+
+.flow-box{border-radius:10px;padding:14px 18px;text-align:center;font-size:13px}
+.flow-s{background:#0a2a1e;border:1.5px solid #16c79a44}
+.flow-s .fname{color:#16c79a;font-weight:700}
+.flow-s .fio{font-size:11px;color:#7c7f85;margin-top:2px}
+.flow-m{background:#1a0810;border:1.5px solid #e9456044}
+.flow-m .fname{color:#e94560;font-weight:700}
+.flow-m .fio{font-size:11px;color:#7c7f85;margin-top:2px}
+.flow-arr{text-align:center;color:#30363d;font-size:16px;padding:2px 0}
+.flow-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+</style>
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head">
+  <h1>代码骨架：跟着这个顺序写</h1>
+  <div class="sub">不是让你一次看完——按顺序从下往上一层一层搭，每一层写完都能单独测试</div>
+</div>
+
+<!-- ====== 编写顺序路线图 ====== -->
+<div class="sec-title">你应该按这个顺序写代码</div>
+<div class="roadmap">
+  <div class="rm now">1. bsp/</div>
+  <span style="color:#30363d;display:flex;align-items:center;">→</span>
+  <div class="rm">2. module/</div>
+  <span style="color:#30363d;display:flex;align-items:center;">→</span>
+  <div class="rm">3. algo/</div>
+  <span style="color:#30363d;display:flex;align-items:center;">→</span>
+  <div class="rm">4. config/</div>
+  <span style="color:#30363d;display:flex;align-items:center;">→</span>
+  <div class="rm">5. app/</div>
+  <span style="color:#30363d;display:flex;align-items:center;">→</span>
+  <div class="rm">6. main.c</div>
+</div>
+<div class="call" style="margin-bottom:28px;">
+  <div class="cttl">为什么是这个顺序？</div>
+  <ul>
+    <li><b>bsp/ 先写</b>——你连 PWM 都输出不了、ADC 都读不到值，后面写什么都没用</li>
+    <li><b>module/ 第二</b>——把 bsp 包一层，变成"line_pos""distance""heading"这些有意义的变量</li>
+    <li><b>algo/ 第三</b>——纯数学的 PID，不依赖任何硬件，可以在电脑上单独调通</li>
+    <li><b>config/ 第四</b>——把所有可调的数字集中到一个头文件</li>
+    <li><b>app/ 第五</b>——状态机和主控循环，把前四层拼起来</li>
+    <li><b>main.c 最后</b>——只做初始化 + 启动循环，5 行有效代码</li>
+  </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 第 1 步：bsp -->
+<!-- ================================================================ -->
+<div class="sec-title">第一步：bsp/ — 让每个外设"能跑"</div>
+
+<div class="sec-sub">这一层不写任何业务逻辑。目标：串口能打印、ADC 能读到电压、定时器能输出 PWM、编码器能计数、I2C 能读到设备地址。每个文件写完立刻单独测。</div>
+
+<div class="sec-sub" style="font-size:12px;color:#7c7f85;font-weight:600;margin-top:16px;">bsp/ 不关心"用这个外设做什么"，只关心"这个外设本身对不对"。</div>
+
+<div class="code"><span class="cm">/* ====== bsp_adc.h — 灰度传感器 8 路 ADC ====== */</span>
+<span class="kw">#ifndef BSP_ADC_H</span>
+<span class="kw">#define BSP_ADC_H</span>
+<span class="kw">#include</span> <span class="str">&lt;ti/driverlib/driverlib.h&gt;</span>  <span class="cm">// MSPM0 DriverLib</span>
+
+<span class="cm">/* 8 路灰度对应的 ADC 通道 */</span>
+<span class="kw">#define</span> ADC_CH_GRAY_0  DL_ADC12_MEM_IDX_0
+<span class="kw">#define</span> ADC_CH_GRAY_1  DL_ADC12_MEM_IDX_1
+<span class="kw">#define</span> ADC_CH_GRAY_2  DL_ADC12_MEM_IDX_2
+<span class="kw">#define</span> ADC_CH_GRAY_3  DL_ADC12_MEM_IDX_3
+<span class="kw">#define</span> ADC_CH_GRAY_4  DL_ADC12_MEM_IDX_4
+<span class="kw">#define</span> ADC_CH_GRAY_5  DL_ADC12_MEM_IDX_5
+<span class="kw">#define</span> ADC_CH_GRAY_6  DL_ADC12_MEM_IDX_6
+<span class="kw">#define</span> ADC_CH_GRAY_7  DL_ADC12_MEM_IDX_7
+
+<span class="ty">void</span> <span class="fn">bsp_adc_init</span>(<span class="ty">void</span>);                             <span class="cm">// 初始化 ADC + 8 个通道</span>
+<span class="ty">uint16_t</span> <span class="fn">bsp_adc_read_ch</span>(<span class="ty">uint8_t</span> channel);          <span class="cm">// 读单通道原始值</span>
+<span class="kw">#endif</span></div>
+
+<div class="code"><span class="cm">/* ====== bsp_adc.c ====== */</span>
+<span class="ty">void</span> <span class="fn">bsp_adc_init</span>(<span class="ty">void</span>) {
+    <span class="cm">// 1. 开 ADC 时钟 (DL_ADC12)</span>
+    <span class="cm">// 2. 配 8 个模拟输入引脚</span>
+    <span class="cm">// 3. 配 ADC 采样时间 + 分辨率 (12bit)</span>
+    <span class="cm">// 4. 使能 ADC</span>
+    <span class="cm">// ⚠ 用 TI DriverLib，不手写寄存器。CCS SysConfig 可以自动生成这部分</span>
+}
+
+<span class="ty">uint16_t</span> <span class="fn">bsp_adc_read_ch</span>(<span class="ty">uint8_t</span> ch) {
+    <span class="cm">// DL_ADC12_startConversion() → 等完成 → DL_ADC12_getMemResult(ch)</span>
+    <span class="kw">return</span> DL_ADC12_getMemResult(ch);  <span class="cm">// 返回 0~4095</span>
+}
+<span class="cm">/* ✅ 测法：串口打印 8 路值，手拿白纸和黑胶带分别在传感器下划过，看数值变不变 */</span></div>
+
+<div class="code"><span class="cm">/* ====== bsp_tim.h — 定时器 ====== */</span>
+<span class="ty">void</span> <span class="fn">bsp_pwm_init</span>(<span class="ty">void</span>);          <span class="cm">// PWM 输出 (TIMG) → 520 电机</span>
+<span class="ty">void</span> <span class="fn">bsp_encoder_init</span>(<span class="ty">void</span>);    <span class="cm">// 编码器模式 (TIMG 正交解码)</span>
+<span class="ty">void</span> <span class="fn">bsp_pwm_set_l</span>(<span class="ty">uint16_t</span> duty);  <span class="cm">// 0~1000</span>
+<span class="ty">void</span> <span class="fn">bsp_pwm_set_r</span>(<span class="ty">uint16_t</span> duty);
+<span class="ty">int32_t</span> <span class="fn">bsp_encoder_get_l</span>(<span class="ty">void</span>);  <span class="cm">// 读编码器计数值</span>
+<span class="ty">int32_t</span> <span class="fn">bsp_encoder_get_r</span>(<span class="ty">void</span>);
+<span class="cm">/* ✅ 测法：PWM → 示波器看波形。编码器 → 手转轮子串口打印计数 */</span></div>
+
+<div class="code"><span class="cm">/* ====== bsp_i2c.h — I2C (OLED + MPU6050) ====== */</span>
+<span class="ty">void</span> <span class="fn">bsp_i2c_init</span>(<span class="ty">void</span>);
+<span class="ty">uint8_t</span> <span class="fn">bsp_i2c_write</span>(<span class="ty">uint8_t</span> addr, <span class="ty">uint8_t</span> reg, <span class="ty">uint8_t</span> data);
+<span class="ty">uint8_t</span> <span class="fn">bsp_i2c_read</span>(<span class="ty">uint8_t</span> addr, <span class="ty">uint8_t</span> reg, <span class="ty">uint8_t</span> *buf, <span class="ty">uint8_t</span> len);
+<span class="cm">/* ✅ 测法：I2C 扫设备地址 → 串口打印 0x3C(OLED) 0x68(MPU6050) 看到就算通 */</span></div>
+
+<div class="code"><span class="cm">/* ====== bsp_uart.h — 串口调试 ====== */</span>
+<span class="ty">void</span> <span class="fn">bsp_uart_init</span>(<span class="ty">void</span>);
+<span class="ty">void</span> <span class="fn">bsp_uart_send</span>(<span class="ty">uint8_t</span> *data, <span class="ty">uint16_t</span> len);
+<span class="cm">// 重定向 printf 到串口，调试全靠它
+// ✅ 测法：printf("Hello\r\n"); 串口助手收到就是通</span></div>
+
+<div class="code"><span class="cm">/* ====== bsp_gpio.h — 开关量 ====== */</span>
+<span class="kw">#define</span> BUZZER_PIN  <span class="cm">/* 查 pin_config.h */</span>
+<span class="kw">#define</span> LED_PIN
+<span class="kw">#define</span> BTN_START_PIN
+
+<span class="kw">#define</span> <span class="fn">BUZZER_ON</span>()   DL_GPIO_setPins(BUZZER_PORT, BUZZER_PIN)
+<span class="kw">#define</span> <span class="fn">BUZZER_OFF</span>()  DL_GPIO_clearPins(BUZZER_PORT, BUZZER_PIN)
+<span class="kw">#define</span> <span class="fn">BTN_START</span>()   (!DL_GPIO_readPins(BTN_PORT, BTN_PIN))
+<span class="cm">/* ✅ 测法：按键 → 蜂鸣器响 → 松开停。5 秒测完 */</span></div>
+
+<!-- ================================================================ -->
+<!-- 第 2 步：module -->
+<!-- ================================================================ -->
+<div class="sec-title">第二步：module/ — 把传感器读数变成有意义的变量</div>
+<div class="sec-sub">这一层调用 bsp/，但不再暴露"ADC 通道几""编码器计数"这些底层东西。对外只输出三个变量：<b>line_pos、distance、heading</b>，外加两个写入接口：<b>pwm_l、pwm_r</b>，和一个提示接口：<b>beep</b>。</div>
+
+<div class="code"><span class="cm">/* ====== mod_grayscale.c — 8 路 ADC → line_pos (-100~+100) ====== */</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_adc.h"</span>
+
+<span class="kw">static</span> <span class="ty">uint16_t</span> black[<span class="num">8</span>], white[<span class="num">8</span>];  <span class="cm">// 校准值</span>
+
+<span class="ty">void</span> <span class="fn">mod_grayscale_calibrate</span>(<span class="ty">void</span>) {
+    <span class="cm">// 车放黑线上 → 读 8 路 → 存到 black[]
+    // 车放白布上 → 读 8 路 → 存到 white[]
+    // 阈值 = (black[i] + white[i]) / 2
+}</span>
+
+<span class="ty">int16_t</span> <span class="fn">mod_grayscale_read</span>(<span class="ty">void</span>) {
+    <span class="cm">// 1. 读 8 路 ADC 值
+    // 2. 每路跟自己的阈值比：低于阈值→在黑线上(1)，高于→白地(0)
+    // 3. 加权求和：最左 -4权重，最右 +4权重，中间 0 权重
+    //    8 路全黑 → line_pos ≈ 0（黑线在正中间）
+    //    右边几路黑 → line_pos > 0（偏右，需左转）
+    //    左边几路黑 → line_pos < 0（偏左，需右转）</span>
+    <span class="kw">return</span> line_pos;  <span class="cm">// -100 到 +100</span>
+}
+<span class="cm">/* ✅ 测法：车静止，手动左右移动黑胶带，串口打印 line_pos 看变化 */</span></div>
+
+<div class="code"><span class="cm">/* ====== mod_encoder.c — 编码器计数 → speed + distance ====== */</span>
+<span class="kw">#include</span> <span class="str">"config/car_config.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_tim.h"</span>
+
+<span class="kw">static</span> <span class="ty">int32_t</span> last_cnt_l, last_cnt_r;
+<span class="kw">static</span> <span class="ty">float</span>   total_distance;
+
+<span class="ty">void</span> <span class="fn">mod_encoder_reset</span>(<span class="ty">void</span>) { total_distance = <span class="num">0</span>; }
+
+<span class="ty">float</span> <span class="fn">mod_encoder_get_distance</span>(<span class="ty">void</span>) {
+    <span class="cm">// 每次定时器中断 (比如 10ms)：
+    //   delta_l = enc_l - last_cnt_l;  同步清零
+    //   delta_r = enc_r - last_cnt_r;
+    //   avg_delta = (delta_l + delta_r) / 2
+    //   dist_step = avg_delta / ENCODER_PPR * π * WHEEL_DIAMETER
+    //   total_distance += dist_step</span>
+    <span class="kw">return</span> total_distance;
+}
+
+<span class="ty">float</span> <span class="fn">mod_encoder_get_speed_l</span>(<span class="ty">void</span>) { <span class="cm">/* delta_l → mm/s */</span> }
+<span class="ty">float</span> <span class="fn">mod_encoder_get_speed_r</span>(<span class="ty">void</span>) { <span class="cm">/* delta_r → mm/s */</span> }
+<span class="cm">/* ✅ 测法：手推车走 1m，串口打印 distance，看是不是 ≈1000mm */</span></div>
+
+<div class="code"><span class="cm">/* ====== mod_motor.c — PWM 占空比 → 四路编码器驱动 → 520 电机 ====== */</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_tim.h"</span>
+
+<span class="ty">void</span> <span class="fn">mod_motor_set</span>(<span class="ty">uint16_t</span> pwm_l, <span class="ty">uint16_t</span> pwm_r) {
+    <span class="cm">// pwm_l → 左轮 (正转 = 车前进)
+    // pwm_r → 右轮 (正转 = 车前进)
+    // ⚠ 四路编码器驱动模块一个 PWM 控制一个电机方向+速度
+    //    如果接了 DIR 脚：pwm > 0 → DIR=高(前进)；pwm=绝对值</span>
+    <span class="fn">bsp_pwm_set_l</span>(pwm_l);
+    <span class="fn">bsp_pwm_set_r</span>(pwm_r);
+}
+<span class="ty">void</span> <span class="fn">mod_motor_stop</span>(<span class="ty">void</span>) { <span class="fn">bsp_pwm_set_l</span>(<span class="num">0</span>); <span class="fn">bsp_pwm_set_r</span>(<span class="num">0</span>); }
+<span class="cm">/* ✅ 测法：mod_motor_set(300,300) → 两轮同速正转，车直走 */</span></div>
+
+<div class="code"><span class="cm">/* ====== mod_imu.c — MPU6050/JY901 → heading ====== */</span>
+<span class="ty">void</span> <span class="fn">mod_imu_calibrate</span>(<span class="ty">void</span>);     <span class="cm">// 静止采零漂，存 gyro_bias</span>
+<span class="ty">float</span> <span class="fn">mod_imu_get_heading</span>(<span class="ty">void</span>);  <span class="cm">// 累计陀螺仪 Z 轴积分 → 航向角 0~360°</span>
+<span class="cm">/* ✅ 测法：串口打印 heading，转车 90° 看数字是否变 ≈90 */</span></div>
+
+<div class="code"><span class="cm">/* ====== mod_buzzer.c — 声光提示 ====== */</span>
+<span class="ty">void</span> <span class="fn">mod_buzzer_beep</span>(<span class="ty">void</span>) {
+    <span class="fn">BUZZER_ON</span>(); DL_Common_delayCycles(<span class="num">8000000</span>); <span class="fn">BUZZER_OFF</span>();  <span class="cm">// 100ms</span>
+}
+<span class="cm">/* ✅ 测法：调用一次响一声 */</span></div>
+
+<!-- ================================================================ -->
+<!-- 第 3 步：algo -->
+<!-- ================================================================ -->
+<div class="sec-title">第三步：algo/ — PID 纯数学，可以在电脑上测</div>
+<div class="sec-sub">这一层 <b>不 #include 任何硬件头文件</b>。输入是数字，输出也是数字。你甚至可以在电脑上写个 Python 版先验算。</div>
+
+<div class="code"><span class="cm">/* ====== pid.c — 两个 PID ====== */</span>
+<span class="kw">#include</span> <span class="str">"pid.h"</span>
+<span class="kw">#include</span> <span class="str">"config/param.h"</span>   <span class="cm">// 只引参数，不引硬件</span>
+
+<span class="cm">/* 方向环：位置式 PID。输入 error（偏离多少），输出转向量 */</span>
+<span class="ty">int16_t</span> <span class="fn">pid_direction</span>(<span class="ty">float</span> error, <span class="ty">float</span> kp, <span class="ty">float</span> kd) {
+    <span class="kw">static</span> <span class="ty">float</span> last = <span class="num">0</span>;
+    <span class="ty">float</span> out = kp * error + kd * (error - last);
+    last = error;
+    <span class="kw">return</span> (<span class="ty">int16_t</span>)out;
+}
+
+<span class="cm">/* 速度环：增量式 PID。输入 target 和 actual，输出 PWM */</span>
+<span class="ty">uint16_t</span> <span class="fn">pid_speed</span>(<span class="ty">float</span> target, <span class="ty">float</span> actual, <span class="ty">uint8_t</span> side) {
+    <span class="kw">static</span> <span class="ty">float</span> e1[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>}, e2[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>}, u[<span class="num">2</span>]={<span class="num">0</span>,<span class="num">0</span>};
+    <span class="ty">float</span> e = target - actual;
+    <span class="ty">float</span> inc = SPD_KP*(e-e1[side]) + SPD_KI*e + SPD_KD*(e-<span class="num">2</span>*e1[side]+e2[side]);
+    u[side] += inc;
+    <span class="kw">if</span> (u[side] > <span class="num">1000</span>) u[side] = <span class="num">1000</span>;  <span class="cm">// 限幅</span>
+    <span class="kw">if</span> (u[side] &lt; <span class="num">0</span>)    u[side] = <span class="num">0</span>;
+    e2[side] = e1[side]; e1[side] = e;
+    <span class="kw">return</span> (<span class="ty">uint16_t</span>)u[side];
+}
+<span class="cm">/* ✅ 测法（脱离硬件）：写个 main() 给一串假 line_pos → 打印 turn_amount
+ *    看：正误差得负输出、负误差得正输出 → 逻辑对 */</span></div>
+
+<!-- ================================================================ -->
+<!-- 第 4 步：config -->
+<!-- ================================================================ -->
+<div class="sec-title">第四步：config/ — 把所有调得到的数字集中到三个头文件</div>
+<div class="sec-sub">这一层没有任何 .c 文件，全是 #define。目标：换一个场地、换一套传感器，只改这三个文件。</div>
+
+<div class="code"><span class="cm">/* ====== config/pin_config.h — 引脚映射 ====== */</span>
+<span class="cm">// ADC 引脚（8 路灰度）
+// PWM 引脚（左右电机）
+// I2C 引脚（OLED + MPU6050）
+// UART 引脚（JY901 / 调试串口）
+// GPIO 引脚（蜂鸣器 / LED / 按键）
+// 全部宏定义，查天猛星原理图后填</span>
+
+<span class="cm">/* ====== config/car_config.h — 小车物理参数 ====== */</span>
+<span class="kw">#define</span> WHEEL_DIAMETER    <span class="num">65</span>    <span class="cm">// mm，卡尺量</span>
+<span class="kw">#define</span> ENCODER_PPR       <span class="num">330</span>   <span class="cm">// 520 电机编码器每圈脉冲，串口验证</span>
+<span class="kw">#define</span> TRACK_WIDTH       <span class="num">130</span>   <span class="cm">// 左右轮中心距 mm</span>
+
+<span class="cm">/* ====== config/param.h — 运行时参数（赛场只改这个）===== */</span>
+<span class="cm">// --- 速度 ---</span>
+<span class="kw">#define</span> BASE_SPEED        <span class="num">600</span>   <span class="cm">// 直道/对角线 PWM</span>
+<span class="kw">#define</span> ARC_SPEED         <span class="num">350</span>   <span class="cm">// 弧线段 PWM（直道 60%）</span>
+<span class="kw">#define</span> TURN_LIMIT        <span class="num">300</span>   <span class="cm">// 最大转向量</span>
+<span class="cm">// --- 方向环 ---</span>
+<span class="kw">#define</span> DIR_KP            <span class="num">2.5</span>
+<span class="kw">#define</span> DIR_KP_ARC        <span class="num">5.0</span>   <span class="cm">// 弧线大 P（直道 2 倍）</span>
+<span class="kw">#define</span> DIR_KD            <span class="num">0.8</span>
+<span class="cm">// --- 速度环 ---</span>
+<span class="kw">#define</span> SPD_KP            <span class="num">3.0</span>
+<span class="kw">#define</span> SPD_KI            <span class="num">0.15</span>
+<span class="kw">#define</span> SPD_KD            <span class="num">0.5</span>
+<span class="cm">// --- 场地 ---</span>
+<span class="kw">#define</span> SEG_DIAG          <span class="num">360</span>   <span class="cm">// A→C 对角线 mm</span>
+<span class="kw">#define</span> SEG_ARC           <span class="num">377</span>   <span class="cm">// 弧线半周长 mm（π×40cm≈1256mm 的半弧需要赛场量）</span>
+<span class="kw">#define</span> VERTEX_TOL        <span class="num">20</span>    <span class="cm">// 顶点容差 mm</span></div>
+
+<!-- ================================================================ -->
+<!-- 第 5 步：app -->
+<!-- ================================================================ -->
+<div class="sec-title">第五步：app/ — 把前四层拼成赛道行为</div>
+<div class="sec-sub">这一层不再碰硬件。只做两件事：① 决定"现在处于哪一段"（状态机），② 在每个状态下怎么控制（task_control）。</div>
+
+<div class="sec-sub" style="font-size:12px;color:#e94560;font-weight:600;">app/ 离硬件最远，但离"车的行为"最近。赛道逻辑全在这。</div>
+
+<div class="code"><span class="cm">/* ====== app/state_machine.h ====== */</span>
+<span class="kw">typedef enum</span> {
+    STATE_DIAG_AC,  <span class="cm">// A→C 对角线 · 白地 · IMU 航向锁定</span>
+    STATE_ARC_CB,   <span class="cm">// C→B 右弧线 · 巡黑线 · 降速+大P</span>
+    STATE_DIAG_BD,  <span class="cm">// B→D 对角线 · 白地 · IMU 航向锁定</span>
+    STATE_ARC_DA,   <span class="cm">// D→A 左弧线 · 巡黑线 · 降速+大P</span>
+    STATE_STOP      <span class="cm">// 4圈完成 · 停车</span>
+} <span class="ty">State</span>;
+
+<span class="kw">extern</span> <span class="ty">State</span>   g_state;
+<span class="kw">extern</span> <span class="ty">uint8_t</span> g_lap;
+
+<span class="ty">void</span> <span class="fn">state_init</span>(<span class="ty">void</span>);                       <span class="cm">// state=S0, lap=0</span>
+<span class="ty">void</span> <span class="fn">state_update</span>(<span class="ty">float</span> distance);           <span class="cm">// 传入里程 → 判定是否切状态</span>
+
+<span class="cm">/* ====== app/task_control.h ====== */</span>
+<span class="ty">void</span> <span class="fn">task_control</span>(<span class="ty">void</span>);  <span class="cm">// 主控循环：读→算→出→判。每 10ms 调一次</span></div>
+
+<div class="code"><span class="cm">/* ====== app/state_machine.c ====== */</span>
+<span class="kw">#include</span> <span class="str">"state_machine.h"</span>
+<span class="kw">#include</span> <span class="str">"config/param.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_encoder.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_buzzer.h"</span>
+
+<span class="ty">State</span>   g_state = STATE_DIAG_AC;
+<span class="ty">uint8_t</span> g_lap   = <span class="num">0</span>;
+
+<span class="ty">void</span> <span class="fn">state_init</span>(<span class="ty">void</span>) { g_state = STATE_DIAG_AC; g_lap = <span class="num">0</span>; <span class="fn">mod_encoder_reset</span>(); }
+
+<span class="ty">void</span> <span class="fn">state_update</span>(<span class="ty">float</span> distance) {
+    <span class="kw">switch</span> (g_state) {
+        <span class="kw">case</span> STATE_DIAG_AC:
+            <span class="kw">if</span> (distance >= SEG_DIAG) {
+                g_state = STATE_ARC_CB; <span class="fn">mod_encoder_reset</span>(); <span class="fn">mod_buzzer_beep</span>();
+            } <span class="kw">break</span>;
+        <span class="kw">case</span> STATE_ARC_CB:
+            <span class="kw">if</span> (distance >= SEG_ARC) {
+                g_state = STATE_DIAG_BD; <span class="fn">mod_encoder_reset</span>(); <span class="fn">mod_buzzer_beep</span>();
+            } <span class="kw">break</span>;
+        <span class="kw">case</span> STATE_DIAG_BD:
+            <span class="kw">if</span> (distance >= SEG_DIAG) {
+                g_state = STATE_ARC_DA; <span class="fn">mod_encoder_reset</span>(); <span class="fn">mod_buzzer_beep</span>();
+            } <span class="kw">break</span>;
+        <span class="kw">case</span> STATE_ARC_DA:
+            <span class="kw">if</span> (distance >= SEG_ARC) {
+                <span class="fn">mod_buzzer_beep</span>(); g_lap++;
+                <span class="kw">if</span> (g_lap >= <span class="num">4</span>) g_state = STATE_STOP;
+                <span class="kw">else</span> { g_state = STATE_DIAG_AC; <span class="fn">mod_encoder_reset</span>(); }
+            } <span class="kw">break</span>;
+        <span class="kw">case</span> STATE_STOP:
+            <span class="fn">mod_motor_stop</span>(); <span class="kw">break</span>;
+    }
+}</div>
+
+<div class="code"><span class="cm">/* ====== app/task_control.c — 主控循环，每 10ms 跑一次 ====== */</span>
+<span class="kw">#include</span> <span class="str">"task_control.h"</span>
+<span class="kw">#include</span> <span class="str">"state_machine.h"</span>
+<span class="kw">#include</span> <span class="str">"config/param.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_grayscale.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_encoder.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_motor.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_imu.h"</span>
+<span class="kw">#include</span> <span class="str">"algo/pid.h"</span>
+
+<span class="ty">void</span> <span class="fn">task_control</span>(<span class="ty">void</span>) {
+    <span class="cm">// ===== 1. 读：从 module 拿三个核心变量 =====</span>
+    <span class="ty">int16_t</span> line_pos = <span class="fn">mod_grayscale_read</span>();
+    <span class="ty">float</span>   distance = <span class="fn">mod_encoder_get_distance</span>();
+    <span class="ty">float</span>   heading  = <span class="fn">mod_imu_get_heading</span>();
+    <span class="ty">float</span>   spd_l    = <span class="fn">mod_encoder_get_speed_l</span>();
+    <span class="ty">float</span>   spd_r    = <span class="fn">mod_encoder_get_speed_r</span>();
+
+    <span class="kw">if</span> (g_state == STATE_STOP) <span class="kw">return</span>;
+
+    <span class="cm">// ===== 2. 算：根据当前状态选策略 → PID =====</span>
+    <span class="ty">uint16_t</span> base; <span class="ty">int16_t</span> turn;
+
+    <span class="kw">if</span> (g_state == STATE_ARC_CB || g_state == STATE_ARC_DA) {
+        <span class="cm">// 弧线段：有黑线，用灰度巡线。降速 + 大 P</span>
+        base = ARC_SPEED;
+        turn = <span class="fn">pid_direction</span>(line_pos, DIR_KP_ARC, DIR_KD);
+    } <span class="kw">else</span> {
+        <span class="cm">// 对角线段：白地，没有黑线。锁定陀螺仪航向</span>
+        base = BASE_SPEED;
+        <span class="kw">static</span> <span class="ty">float</span> target_h;
+        <span class="kw">if</span> (distance &lt; <span class="num">5</span>) target_h = heading;  <span class="cm">// 刚进入状态时锁当前航向</span>
+        <span class="ty">float</span> h_err = target_h - heading;
+        turn = <span class="fn">pid_direction</span>(h_err, DIR_KP, DIR_KD);
+    }
+
+    <span class="cm">// ===== 3. 出：速度环 → PWM =====</span>
+    <span class="ty">int16_t</span> tL = base + turn, tR = base - turn;
+    <span class="kw">if</span> (tL &gt; <span class="num">1000</span>) tL = <span class="num">1000</span>; <span class="kw">if</span> (tL &lt; <span class="num">0</span>) tL = <span class="num">0</span>;
+    <span class="kw">if</span> (tR &gt; <span class="num">1000</span>) tR = <span class="num">1000</span>; <span class="kw">if</span> (tR &lt; <span class="num">0</span>) tR = <span class="num">0</span>;
+
+    <span class="ty">uint16_t</span> pwmL = <span class="fn">pid_speed</span>(tL, spd_l, <span class="num">0</span>);
+    <span class="ty">uint16_t</span> pwmR = <span class="fn">pid_speed</span>(tR, spd_r, <span class="num">1</span>);
+    <span class="fn">mod_motor_set</span>(pwmL, pwmR);
+
+    <span class="cm">// ===== 4. 判：里程到了就切状态 =====</span>
+    <span class="fn">state_update</span>(distance);
+}</div>
+
+<!-- ================================================================ -->
+<!-- 第 6 步：main.c -->
+<!-- ================================================================ -->
+<div class="sec-title">第六步：main.c — 只做初始化 + 启动循环</div>
+<div class="sec-sub">main.c 是所有分层的结果——它自己没有任何逻辑，只负责把各层初始化、然后死循环跑 task_control()。就 5 行有效代码。</div>
+
+<div class="code"><span class="cm">/* ====== main.c — 入口 ====== */</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_clock.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_tim.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_adc.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_i2c.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_uart.h"</span>
+<span class="kw">#include</span> <span class="str">"bsp/bsp_gpio.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_grayscale.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_encoder.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_motor.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_imu.h"</span>
+<span class="kw">#include</span> <span class="str">"module/mod_oled.h"</span>
+<span class="kw">#include</span> <span class="str">"app/state_machine.h"</span>
+<span class="kw">#include</span> <span class="str">"app/task_control.h"</span>
+
+<span class="ty">void</span> <span class="fn">main</span>(<span class="ty">void</span>) {
+    <span class="cm">/* --- 初始化：从下往上 Init --- */</span>
+    <span class="fn">bsp_clock_init</span>();                <span class="cm">// SYSCLK = 80MHz</span>
+    <span class="fn">bsp_tim_init</span>();                  <span class="cm">// PWM + 编码器模式</span>
+    <span class="fn">bsp_adc_init</span>();                  <span class="cm">// 灰度 8 路 ADC</span>
+    <span class="fn">bsp_i2c_init</span>();                  <span class="cm">// OLED + MPU6050</span>
+    <span class="fn">bsp_uart_init</span>();                 <span class="cm">// 调试串口 + printf</span>
+    <span class="fn">bsp_gpio_init</span>();                 <span class="cm">// 蜂鸣器 LED 按键</span>
+
+    <span class="fn">mod_grayscale_calibrate</span>();       <span class="cm">// 采黑白阈值（车先放黑线上再放白布上）</span>
+    <span class="fn">mod_encoder_reset</span>();             <span class="cm">// 编码器里程清零</span>
+    <span class="fn">mod_imu_calibrate</span>();             <span class="cm">// 陀螺仪零漂</span>
+    <span class="fn">state_init</span>();                    <span class="cm">// state = S0, lap = 0</span>
+
+    <span class="fn">mod_oled_show</span>(<span class="str">"READY"</span>);
+
+    <span class="cm">/* --- 等按键发车 --- */</span>
+    <span class="kw">while</span> (<span class="fn">BTN_START</span>() == <span class="num">0</span>);
+
+    <span class="cm">/* --- 主循环 --- */</span>
+    <span class="kw">while</span> (<span class="num">1</span>) {
+        <span class="fn">task_control</span>();               <span class="cm">// 读 → 算 → 出 → 判，每 10ms 一次</span>
+        <span class="cm">// 这里加一个 10ms 延时（或放定时器中断里触发）</span>
+    }
+}</div>
+
+<div class="sec-title">总结：整个程序的数据流向</div>
+<div class="flow-row">
+  <div class="flow-box flow-s"><div class="fname">8 路灰度 ADC</div><div class="fio">→ line_pos</div></div>
+  <div class="flow-box flow-s"><div class="fname">编码器 TIM</div><div class="fio">→ distance, speed</div></div>
+  <div class="flow-box flow-s"><div class="fname">MPU6050 I2C</div><div class="fio">→ heading</div></div>
+</div>
+<div class="flow-arr">▼ 三个变量进入 task_control() ▼</div>
+<div class="flow-row">
+  <div class="flow-box flow-m"><div class="fname">方向环 PID</div><div class="fio">line_pos → turn_amount</div></div>
+  <div style="display:flex;align-items:center;color:#f0a500;font-size:20px;">→</div>
+  <div class="flow-box flow-m"><div class="fname">速度环 PID ×2</div><div class="fio">(base±turn) vs actual → pwm_l, pwm_r</div></div>
+</div>
+<div class="flow-arr">▼ 两路 PWM ▼</div>
+<div class="flow-row">
+  <div class="flow-box" style="background:#1a0810;border:1.5px solid #e94560;">
+    <div class="fname" style="color:#e94560;">四路编码器驱动</div>
+    <div class="fio" style="color:#8b949e;">→ 520 电机左轮 + 右轮</div>
+  </div>
+</div>
+<div class="flow-arr" style="color:#7c3aed;font-size:12px;">▲ 编码器反馈实际速度 → 速度环闭环</div>
+
+<div style="text-align:center;margin-top:20px;font-size:13px;color:#7c7f85;">
+  这就是整辆车的全部代码逻辑。看懂这张图 = 看懂整个程序。
+</div>
+
+</div>
+</body>
+</html>
