@@ -3,69 +3,104 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PID调参 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+<style>.fail-inline{background:#1a0810;border-left:3px solid #e94560;border-radius:0 8px 8px 0;padding:8px 14px;margin:8px 0;font-size:12px;color:#e94560;max-width:680px}.ok-inline{background:#06140c;border-left:3px solid #16c79a;border-radius:0 8px 8px 0;padding:8px 14px;margin:8px 0;font-size:12px;color:#16c79a;max-width:680px}</style>
 </head>
 <body>
 <div class="container">
 <a class="back" href="index.html">&larr; 返回首页</a>
-<div class="page-head"><h1>PID 调参：一次只改一个数</h1><div class="sub">调参不是玄学。按这 7 步来，每一步只动一个参数，你知道改动起了什么作用</div></div>
+<div class="page-head"><h1>PID 调参方法</h1><div class="sub">调参不是玄学——按顺序来，每一步只改一个数，你知道每次改动起了什么作用</div></div>
+
+<div class="sec-title">核心原则：一次只改一个参数</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  同时改 Kp 和 Kd，车变好了——你不知道是 Kp 的功劳还是 Kd 的功劳。下次换个场地你又不会调了。<br><br>
+  <b>正确做法：</b>每次只动一个参数，跑一圈观察。有效果就记住；没效果就改回去，动下一个。<br><br>
+  调参顺序也重要：<b>先速度环后方向环，先直线后弧线。</b>速度环是基础——车都跑不稳速度，方向环调再好也没用。
+</div>
+
+<div class="sec-title">七步逐级整定法</div>
 
 <div class="tstep" style="border-left:3px solid #e94560;">
   <div class="tsn">1</div><div class="tsb">
-    <div class="tst">先调速度环 Kp（关掉方向环）</div>
-    <div class="tsd">让车直走。方向环输出恒为 0，只调 SPD_KP。给目标速度 400，看编码器反馈的实际速度能不能跟上。能稳定在目标 ±5% → Kp 够了。</div>
-    <div class="tsc">KI=0 KD=0，只动 KP。编码器打印到串口看波形</div>
+    <div class="tst">关掉方向环，只调速度环 KP</div>
+    <div class="tsd">让车直走。方向环输出恒为 0（turn=0，两轮目标速度相同）。给 BASE_SPEED=400，串口打印编码器实测速度。<br><br>
+    <b>为什么先关方向环？</b> 方向环也在调两轮转速，开着的话你不知道速度波动是速度环自己造成的还是方向环在纠偏。<br><br>
+    <b>怎么看 KP 够不够：</b> 实测速度在目标值 ±5% 范围内稳定 → KP 够。波动大 → KP 太大，减。一直低于目标 → KP 太小，加。</div>
+    <div class="tsc">KI=0 KD=0，只动 KP。编码器串口打印看波形</div>
   </div>
 </div>
+
+<div class="ok-inline">✓ 期望效果：给 400，实际 390~410 稳定。推一下车（加负载），速度短暂下跌后恢复</div>
+
 <div class="tstep">
   <div class="tsn">2</div><div class="tsb">
-    <div class="tst">速度环加 Ki（消静差）</div>
-    <div class="tsd">从 0.05 起加，每次 +0.05。看到实际速度精确跟住目标且不过冲 → 停。如果过冲（先超再回落）→ Ki 太大了。</div>
+    <div class="tst">加速度环 Ki</div>
+    <div class="tsd">从 0.05 开始，每次 +0.05。看实际速度能否精确跟踪目标。加过头 → 速度过冲（先超再回落），退回去。<br><br>
+    <b>为什么需要 Ki：</b> 纯 P 控制有静差——实际速度永远比目标低一点点。Ki 把这点误差慢慢积起来消除。但 Ki 太大就会过冲。</div>
+    <div class="tsc">SPD_KI 从 0.05 开始 +0.05 每次</div>
   </div>
 </div>
+
 <div class="tstep">
   <div class="tsn">3</div><div class="tsb">
-    <div class="tst">速度环加 Kd（可跳过）</div>
-    <div class="tsd">电机有嗡嗡声或速度毛刺大时才加，0.1~0.3。大多数情况下 PI 就够用了。</div>
+    <div class="tst">速度环 Kd（大多数情况跳过）</div>
+    <div class="tsd">电机有嗡嗡声或速度毛刺大时才加，0.1~0.3。Kd 抑制速度突变，但加多了电机会"犹豫"——该加速时反应迟钝。<br><br>MSPM0G3507 控制 520 电机用 PI 就够了，KD 大概率不需要。</div>
   </div>
 </div>
+
 <div class="tstep" style="border-left:3px solid #e94560;">
   <div class="tsn">4</div><div class="tsb">
-    <div class="tst">速度环锁死，开方向环调 Kp</div>
-    <div class="tsd">车速固定 400。DIR_KP 从 1.0 起，每次 +0.5。观察车在直道上：S 形摆动 → KP 太大，退一半。纠正太慢 → KP 太小，继续加。</div>
-    <div class="tsc">这个阶段只跑直线，不要上弧线</div>
+    <div class="tst">速度环锁死，开方向环调 KP（只跑直线！）</div>
+    <div class="tsd">BASE_SPEED 固定在 400。DIR_KP 从 1.0 起，每次 +0.5。跑直线观察车的行为。<br><br>
+    <b>怎么看 KP 对不对：</b><br>
+    • 车 S 形左右摆动 → KP 太大，×0.7<br>
+    • 车慢慢偏出赛道 → KP 太小，×1.5<br>
+    • 车稳在中间微调 → KP 刚好<br><br>
+    <b>为什么直线阶段不调弧形 KP？</b> 直线和弧线的 KP 需求完全不同。先让直线稳了，再单独攻弧线。</div>
+    <div class="tsc">DIR_KP 从 1.0 起 +0.5 每次，只跑直线</div>
   </div>
 </div>
+
+<div class="ok-inline">✓ 期望效果：车在直道上稳在中线，微小的左右摇摆（< 1cm）可以接受</div>
+
 <div class="tstep">
   <div class="tsn">5</div><div class="tsb">
     <div class="tst">方向环加 Kd</div>
-    <div class="tsd">DIR_KP 定了后，如果车纠正时有多余摆动（越过中线弹回来），加 KD 0.3 起，每次 +0.2。</div>
+    <div class="tsd">Kp 定了后如果车纠正时有多余摆动（越过中线后又弹回来），加 Kd。0.3 起，+0.2 每次。<br><br>
+    <b>Kd 的作用：</b> "预感"到误差在变大，提前收油门。比如车正在往右偏，Kd 项会提前给出一个反向修正，防止过冲。</div>
   </div>
 </div>
+
 <div class="tstep" style="border-left:3px solid #e94560;">
   <div class="tsn">6</div><div class="tsb">
-    <div class="tst">弧线段单独调 KP（最关键！）</div>
-    <div class="tsd">降低速度到 ARC_SPEED（约直道的 60%），在弧线入口观察。弧线的 DIR_KP_ARC 通常需要直道 KP 的 1.5～2.5 倍。<br><br><b>翻车最多的地方：弧线入口。</b>线突然弯了，方向环反应不过来 → 建议在入口前 5cm 就切到"大KP+降速"模式。</div>
-    <div class="tsc">车滑出弧线 → KP太小或速度太快。车轮投影在弧线上抖 → KP太大</div>
+    <div class="tst">弧线段单独攻（最关键！）</div>
+    <div class="tsd">速度降到 ARC_SPEED（直道 60%）。DIR_KP_ARC 从直道 KP 的 1.5 倍开始试。<br><br>
+    <b>为什么要降速？</b> 弧线是弯的，速度快了离心力把车甩出去，KP 再大也拉不回来。先降速保稳，再慢慢提速。<br><br>
+    <b>为什么要大 KP？</b> 弧线上每毫米的偏移如果不立刻纠正，50ms 后车轮就出弧线了 → 0 分。大 KP = 快速反应。<br><br>
+    <b>最大翻车点：弧线入口。</b> 直线突然变弧线 → 方向环来不急反应 → 建议在入口前 5cm 就切到"大KP+降速"模式。</div>
+    <div class="tsc">ARC_SPEED = BASE_SPEED * 0.6，DIR_KP_ARC = DIR_KP * 1.5~2.5</div>
   </div>
 </div>
+
 <div class="tstep">
   <div class="tsn">7</div><div class="tsb">
-    <div class="tst">全路径联调 + 逐步加速</div>
-    <div class="tsd">直道+弧线联调。确认状态切换正确、圈数计数对。BASE_SPEED 每次 +50，跑一圈确认稳了再加。最后一段直道可以超速冲刺。</div>
+    <div class="tst">全路径联调 + 加速</div>
+    <div class="tsd">直道+弧线联调。确认状态切换、圈数计数、顶点提示全正常。<br>BASE_SPEED 每次 +50，加一级跑一圈，稳了再加。不要一次加太多。<br>最后一段直道可以冲刺加速——反正到了之后停车，不担心后续转弯。<br><br>
+    <b>什么时候可以加速？</b> 连续 3 圈不掉线、所有顶点声光提示正确、弧线投影从未脱离 → 可以加。如果第 4 天车还不稳，保 70 分不要贪 100 分。</div>
   </div>
 </div>
 
-<div class="sec-title">常见问题速查</div>
+<div class="sec-title">常见问题速查表（赛场救命用）</div>
 <table class="tbl">
-<tr><th>现象</th><th>原因</th><th>怎么改</th></tr>
-<tr><td>直道左右扭（S形）</td><td>方向 KP 太大</td><td>DIR_KP ×0.7</td></tr>
-<tr><td>纠正太慢，跑着跑着偏了</td><td>方向 KP 太小</td><td>DIR_KP ×1.5</td></tr>
-<tr><td>弧线口冲出去</td><td>速度太快或弧线 KP 不够</td><td>先降 ARC_SPEED，再加大 DIR_KP_ARC</td></tr>
-<tr><td>停车时过冲（超过顶点）</td><td>速度 KI 太大或减速不够早</td><td>降 SPD_KI，提前 10cm 开始减速</td></tr>
+<tr><th>现象</th><th>根因</th><th>改什么</th></tr>
+<tr><td>直道左右扭（S形）</td><td>方向 KP 太大 → 纠正过度</td><td>DIR_KP ×0.7</td></tr>
+<tr><td>纠正太慢，跑着跑着偏出赛道</td><td>方向 KP 太小 → 纠正不足</td><td>DIR_KP ×1.5</td></tr>
+<tr><td>弧线入口直接冲出去</td><td>速度太快或弧线 KP 没加大</td><td>降 ARC_SPEED 到直道 50%，再加大 DIR_KP_ARC</td></tr>
+<tr><td>弧线投影左右抖</td><td>弧线 KP 太大 → 纠正过度</td><td>DIR_KP_ARC ×0.8</td></tr>
+<tr><td>停车时过冲（超过顶点）</td><td>速度 KI 太大或减速太晚</td><td>降 SPD_KI，或提前 10cm 开始减速</td></tr>
 <tr><td>电机嗡嗡叫</td><td>速度 KD 太大</td><td>SPD_KD ×0.5 或直接关掉</td></tr>
-<tr><td>对角线走歪了</td><td>陀螺仪漂移或航向角没校准</td><td>原地转一圈校准，走对角线前重新锁航向</td></tr>
+<tr><td>速度一直比目标低不少</td><td>静差（KI 太小或没开）</td><td>加大 SPD_KI 或检查电池电压是否偏低</td></tr>
+<tr><td>对角线走歪了</td><td>陀螺仪漂移或航向角没锁</td><td>进对角线前 100ms 重新锁航向，每圈校准零漂</td></tr>
+<tr><td>调了半天什么变化都没有</td><td>改错参数了 或 没重新编译</td><td>确认改的是 param.h，确认重新编译+下载了</td></tr>
 </table>
 
-</div>
-</body>
-</html>
+</div></body></html>
