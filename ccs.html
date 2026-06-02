@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCS环境配置 · 电赛练习题</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<a class="back" href="index.html">&larr; 返回首页</a>
+<div class="page-head">
+  <h1>装 CCS Theia + 导入 MSPM0 SDK</h1>
+  <div class="sub">TI 官方 IDE。用 SysConfig 图形化配引脚/时钟/外设，不用手写初始化代码</div>
+</div>
+
+<div class="sec-title">为什么用 CCS Theia？</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  MSPM0 系列是 TI 的芯片，TI 官方 IDE 就是 CCS（Code Composer Studio）。Theia 是最新版，基于 VS Code 内核，界面你熟悉。<br><br>
+  <b>最重要的功能：SysConfig</b>——图形化配引脚。你点一点选一选，它自动生成所有外设初始化代码。不用翻 1000 页参考手册手写寄存器。<br><br>
+  <b>DriverLib：</b> TI 的库函数，类似 STM32 的 HAL 库。你用 <code>DL_ADC12_startConversion()</code> 而不是操作 ADC12 的寄存器。
+</div>
+
+<div class="sec-title">安装步骤</div>
+
+<div class="tstep" style="border-left:3px solid #e94560;">
+  <div class="tsn">1</div><div class="tsb">
+    <div class="tst">下载 CCS Theia</div>
+    <div class="tsd">去 TI 官网 (ti.com) 搜索 "CCS Theia"，下载 Windows 版安装包。安装路径用默认 C:\ti\ccs2051\。</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">2</div><div class="tsb">
+    <div class="tst">下载 MSPM0 SDK</div>
+    <div class="tsd">同样 TI 官网搜索 "MSPM0 SDK"，下载最新版（≥ 2.10）。安装时勾选 MSPM0G3507 支持。默认路径 C:\ti\mspm0_sdk_2_10_00_04\。</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">3</div><div class="tsb">
+    <div class="tst">新建工程</div>
+    <div class="tsd">CCS → File → New Project → 选 MSPM0G3507 → 选 "Empty Project with DriverLib" → 工程名 racecar_h。</div>
+  </div>
+</div>
+<div class="tstep">
+  <div class="tsn">4</div><div class="tsb">
+    <div class="tst">打开 SysConfig 配引脚</div>
+    <div class="tsd">工程里双击 .syscfg 文件 → 打开图形化配置界面。</div>
+  </div>
+</div>
+
+<div class="sec-title">SysConfig 怎么配（重要）</div>
+<div style="max-width:680px;font-size:13px;color:#c9d1d9;line-height:1.7;">
+  SysConfig 打开后左边是外设列表，右边是引脚图。你需要添加以下外设：
+</div>
+
+<table class="tbl">
+<tr><th>外设</th><th>数量</th><th>用途</th><th>配什么引脚</th></tr>
+<tr><td>ADC12</td><td>8 通道</td><td>8 路灰度传感器</td><td>PA0~PA7（或任意 8 个模拟引脚）</td></tr>
+<tr><td>TIMx (PWM)</td><td>2 通道</td><td>左右电机 PWM 输出</td><td>任意 GPIO（配成 TIM PWM 输出）</td></tr>
+<tr><td>TIMx (Encoder)</td><td>2 个</td><td>左右编码器正交解码</td><td>任意 GPIO（配成 TIM 编码器输入）</td></tr>
+<tr><td>I2C</td><td>1 个</td><td>OLED + MPU6050</td><td>PB2=SCL, PB3=SDA</td></tr>
+<tr><td>UART</td><td>1 个</td><td>串口调试 / printf</td><td>任意 UART TX/RX 引脚</td></tr>
+<tr><td>GPIO</td><td>3 个</td><td>蜂鸣器 + LED + 按键</td><td>任意数字引脚，配成输出（蜂鸣器/LED）和输入（按键）</td></tr>
+<tr><td>SYSCLK</td><td>&mdash;</td><td>系统时钟 80MHz</td><td>配 SYSPLL + 时钟分频</td></tr>
+</table>
+
+<div class="sec-sub" style="font-size:12px;color:#7c7f85;margin-top:16px;">
+  配完后点右上角 Save，SysConfig 自动生成 <code>ti_driver_config.c</code> 和 <code>ti_driver_config.h</code>。
+  你的 bsp 代码直接 #include "ti_driver_config.h"，调 DriverLib 函数。
+</div>
+
+<div class="sec-title">SysConfig 配好后你的 bsp 层怎么写</div>
+<div class="code"><span class="cm">/* bsp_adc.c — SysConfig 已经生成了 ADC 初始化代码，你只需要调 DriverLib 函数 */</span>
+<span class="kw">#include</span> <span class="str">"ti_driver_config.h"</span>   <span class="cm">// SysConfig 自动生成的</span>
+<span class="kw">#include</span> <span class="str">"bsp_adc.h"</span>
+
+<span class="ty">void</span> <span class="fn">bsp_adc_init</span>(<span class="ty">void</span>) {
+    <span class="cm">// SysConfig 自动生成了 ADC12_init()，在 main() 的 SystemInit 里会调。
+    // bsp_adc_init 只需要做附加配置（如果有的话）。
+    // 大部分情况下这个函数体是空的——SysConfig 已经帮你配好了。</span>
+}
+
+<span class="ty">uint16_t</span> <span class="fn">bsp_adc_read_ch</span>(<span class="ty">uint8_t</span> ch) {
+    DL_ADC12_startConversion(ADC12_INST);              <span class="cm">// 启动单次转换</span>
+    <span class="kw">while</span> (!DL_ADC12_isMemResultReady(ADC12_INST, ch)); <span class="cm">// 等完成</span>
+    <span class="kw">return</span> DL_ADC12_getMemResult(ADC12_INST, ch);       <span class="cm">// 读 0~4095</span>
+}
+<span class="cm">/* 对比 STM32 HAL：HAL_ADC_Start() → HAL_ADC_PollForConversion() → HAL_ADC_GetValue()
+ * 逻辑完全一样，只是函数名变了。DriverLib 前缀是 DL_ 而不是 HAL_ */</span></div>
+
+<div class="sec-title">常见翻车</div>
+<div class="fail-inline">❌ <b>SysConfig 配了但代码没 include</b> → #include "ti_driver_config.h" 是必须的，否则所有外设都没初始化</div>
+<div class="fail-inline">❌ <b>SDK 版本不匹配</b> → CCS 新建工程时选的 SDK 版本和安装的不一致。Project → Properties → 确认 SDK 路径</div>
+<div class="fail-inline">❌ <b>SysConfig 改了没重新生成</b> → 每次改 .syscfg 后必须点 Save 触发重新生成，否则代码还是旧的</div>
+<div class="fail-inline">❌ <b>调试器选错</b> → 天猛星板载 DAP-Link，CCS 的 Debug Configuration 里选 CMSIS-DAP，不是 XDS110</div>
+<div class="fail-inline">❌ <b>下载提示 "Error connecting to target"</b> → 板子没上电、杜邦线松了、或 Debug Configuration 里选错了调试器类型</div>
+
+</div></body></html>
